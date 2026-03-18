@@ -4,6 +4,7 @@ import {
   loadVRM,
   renderFrame,
   resizeRenderer,
+  setBackground,
   type VRMScene,
 } from "../lib/vrm-scene";
 import {
@@ -12,8 +13,16 @@ import {
   type FaceTracker,
 } from "../lib/face-tracker";
 import { applyTracking } from "../lib/vrm-animator";
+import { cacheVRM, loadCachedVRM } from "../lib/vrm-cache";
 
-const DEFAULT_VRM_URL = "/models/default.vrm";
+const BG_PRESETS = [
+  { label: "透過", value: null },
+  { label: "緑", value: "#00b140" },
+  { label: "青", value: "#0047ab" },
+  { label: "黒", value: "#000000" },
+  { label: "白", value: "#ffffff" },
+  { label: "グレー", value: "#808080" },
+];
 
 export function VRMViewer() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,7 +33,13 @@ export function VRMViewer() {
   const streamRef = useRef<MediaStream | null>(null);
 
   const [status, setStatus] = useState("初期化中...");
+  const [vrmName, setVrmName] = useState<string | null>(null);
   const [tracking, setTracking] = useState(false);
+  const [handTracking, setHandTracking] = useState(true);
+  const [mirror, setMirror] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [bgColor, setBgColor] = useState<string | null>(null);
   const [fps, setFps] = useState(0);
 
   // Initialize Three.js scene
@@ -35,24 +50,27 @@ export function VRMViewer() {
     const vrmScene = createVRMScene(canvas);
     vrmSceneRef.current = vrmScene;
 
-    // Load default VRM if available
-    loadVRM(vrmScene, DEFAULT_VRM_URL)
-      .then(() => setStatus("VRMロード完了"))
+    loadCachedVRM()
+      .then((cached) => {
+        if (cached) {
+          setStatus(`キャッシュから読込中: ${cached.fileName}`);
+          return loadVRM(vrmScene, cached.url).then(() => {
+            setVrmName(cached.fileName);
+            setStatus(`VRMロード完了: ${cached.fileName}`);
+          });
+        }
+        setStatus("VRMファイルを選択してください");
+      })
       .catch(() => setStatus("VRMファイルを選択してください"));
 
-    // Resize handler
     const onResize = () => {
       const rect = canvas.parentElement?.getBoundingClientRect();
-      if (rect) {
-        resizeRenderer(vrmScene, rect.width, rect.height);
-      }
+      if (rect) resizeRenderer(vrmScene, rect.width, rect.height);
     };
     window.addEventListener("resize", onResize);
 
-    // Render loop (always runs)
     let frameCount = 0;
     let lastFpsTime = performance.now();
-
     function loop() {
       renderFrame(vrmScene);
       frameCount++;
@@ -73,10 +91,16 @@ export function VRMViewer() {
     };
   }, []);
 
+  // Apply background color
+  useEffect(() => {
+    if (vrmSceneRef.current) {
+      setBackground(vrmSceneRef.current, bgColor);
+    }
+  }, [bgColor]);
+
   // Tracking loop
   useEffect(() => {
     if (!tracking) return;
-
     let running = true;
 
     async function startTracking() {
@@ -94,7 +118,7 @@ export function VRMViewer() {
       }
 
       setStatus("トラッカー初期化中...");
-      const tracker = await createFaceTracker();
+      const tracker = await createFaceTracker({ enableHands: handTracking });
       trackerRef.current = tracker;
       setStatus("トラッキング中");
 
@@ -117,24 +141,24 @@ export function VRMViewer() {
       trackerRef.current?.dispose();
       trackerRef.current = null;
       if (streamRef.current) {
-        for (const track of streamRef.current.getTracks()) {
-          track.stop();
-        }
+        for (const track of streamRef.current.getTracks()) track.stop();
         streamRef.current = null;
       }
     };
-  }, [tracking]);
+  }, [tracking, handTracking]);
 
   const handleVRMUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file || !vrmSceneRef.current) return;
-
       setStatus("VRMロード中...");
       const url = URL.createObjectURL(file);
       try {
         await loadVRM(vrmSceneRef.current, url);
-        setStatus("VRMロード完了");
+        setStatus(`キャッシュ中: ${file.name}`);
+        await cacheVRM(file);
+        setVrmName(file.name);
+        setStatus(`VRMロード完了: ${file.name}`);
       } catch (err) {
         setStatus(`VRMロード失敗: ${err}`);
       }
@@ -142,108 +166,149 @@ export function VRMViewer() {
     [],
   );
 
-  const toggleTracking = useCallback(() => {
-    setTracking((prev) => !prev);
+  // Toggle controls with Escape key
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowControls((v) => !v);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.viewer}>
-        <canvas ref={canvasRef} style={styles.canvas} />
+    <div className="flex flex-col h-screen bg-[#1a1a2e] text-gray-200 font-sans select-none">
+      {/* Viewer */}
+      <div className="relative flex-1 overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          className="block w-full h-full"
+          style={{ transform: mirror ? "scaleX(-1)" : undefined }}
+        />
         <video
           ref={videoRef}
-          style={styles.video}
+          className={`absolute bottom-3 right-3 w-48 h-36 rounded-lg object-cover border-2 border-white/20 -scale-x-100 ${
+            showPreview ? "block" : "hidden"
+          }`}
           playsInline
           muted
         />
-      </div>
-      <div style={styles.controls}>
-        <div style={styles.statusBar}>
-          <span>{status}</span>
-          <span>{fps} FPS</span>
-        </div>
-        <div style={styles.buttons}>
-          <label style={styles.button}>
-            VRMファイルを選択
-            <input
-              type="file"
-              accept=".vrm"
-              onChange={handleVRMUpload}
-              style={styles.fileInput}
-            />
-          </label>
+
+        {/* Floating toggle for controls */}
+        {!showControls && (
           <button
             type="button"
-            onClick={toggleTracking}
-            style={{
-              ...styles.button,
-              background: tracking ? "#e74c3c" : "#2ecc71",
-            }}
+            onClick={() => setShowControls(true)}
+            className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/50 text-white/70 text-xs hover:bg-black/70 hover:text-white transition-colors"
           >
-            {tracking ? "トラッキング停止" : "トラッキング開始"}
+            Esc: メニュー表示
           </button>
-        </div>
+        )}
       </div>
+
+      {/* Controls */}
+      {showControls && (
+        <div className="px-4 py-3 bg-[#16213e] border-t border-[#0f3460] space-y-2">
+          {/* Status bar */}
+          <div className="flex justify-between text-xs text-gray-400">
+            <span>{status}</span>
+            <span>
+              {vrmName && `${vrmName} | `}
+              {fps} FPS
+            </span>
+          </div>
+
+          {/* Main controls */}
+          <div className="flex flex-wrap gap-2">
+            <label className="btn">
+              VRMファイル
+              <input
+                type="file"
+                accept=".vrm"
+                onChange={handleVRMUpload}
+                className="hidden"
+              />
+            </label>
+
+            <button
+              type="button"
+              onClick={() => setShowPreview((v) => !v)}
+              className={`btn ${showPreview ? "btn-active" : ""}`}
+            >
+              プレビュー
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMirror((v) => !v)}
+              className={`btn ${mirror ? "btn-active" : ""}`}
+            >
+              反転
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { if (!tracking) setHandTracking((v) => !v); }}
+              className={`btn ${handTracking ? "btn-active" : ""} ${tracking ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              指トラッキング
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTracking((v) => !v)}
+              className={`btn ${tracking ? "bg-red-600! hover:bg-red-700!" : "bg-emerald-600! hover:bg-emerald-700!"}`}
+            >
+              {tracking ? "停止" : "開始"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowControls(false)}
+              className="btn ml-auto"
+              title="Escキーでも切替可能"
+            >
+              メニュー非表示
+            </button>
+          </div>
+
+          {/* Background color */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">背景:</span>
+            {BG_PRESETS.map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => setBgColor(preset.value)}
+                className={`w-7 h-7 rounded border-2 text-[10px] flex items-center justify-center transition-colors ${
+                  bgColor === preset.value
+                    ? "border-white"
+                    : "border-white/20 hover:border-white/50"
+                }`}
+                style={{
+                  backgroundColor: preset.value ?? "transparent",
+                  backgroundImage: preset.value
+                    ? undefined
+                    : "linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%)",
+                  backgroundSize: preset.value ? undefined : "8px 8px",
+                  backgroundPosition: preset.value
+                    ? undefined
+                    : "0 0, 4px 4px",
+                }}
+                title={preset.label}
+              >
+                {!preset.value && "✕"}
+              </button>
+            ))}
+            <input
+              type="color"
+              value={bgColor ?? "#000000"}
+              onChange={(e) => setBgColor(e.target.value)}
+              className="w-7 h-7 rounded border-2 border-white/20 cursor-pointer bg-transparent"
+              title="カスタム色"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: "flex",
-    flexDirection: "column",
-    height: "100vh",
-    background: "#1a1a2e",
-    color: "#eee",
-    fontFamily: "system-ui, sans-serif",
-  },
-  viewer: {
-    flex: 1,
-    position: "relative",
-    overflow: "hidden",
-  },
-  canvas: {
-    width: "100%",
-    height: "100%",
-    display: "block",
-  },
-  video: {
-    position: "absolute",
-    bottom: 12,
-    right: 12,
-    width: 200,
-    height: 150,
-    borderRadius: 8,
-    objectFit: "cover",
-    border: "2px solid rgba(255,255,255,0.2)",
-    transform: "scaleX(-1)",
-  },
-  controls: {
-    padding: "12px 16px",
-    background: "#16213e",
-    borderTop: "1px solid #0f3460",
-  },
-  statusBar: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: 8,
-    fontSize: 14,
-    opacity: 0.8,
-  },
-  buttons: {
-    display: "flex",
-    gap: 12,
-  },
-  button: {
-    padding: "8px 16px",
-    border: "none",
-    borderRadius: 6,
-    background: "#0f3460",
-    color: "#eee",
-    cursor: "pointer",
-    fontSize: 14,
-  },
-  fileInput: {
-    display: "none",
-  },
-};

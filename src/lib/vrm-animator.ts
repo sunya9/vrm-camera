@@ -1,4 +1,4 @@
-import type { VRM } from "@pixiv/three-vrm";
+import type { VRM, VRMHumanBoneName } from "@pixiv/three-vrm";
 import * as THREE from "three";
 import type { TrackingResult } from "./face-tracker";
 
@@ -10,8 +10,9 @@ import type { TrackingResult } from "./face-tracker";
 const euler = new THREE.Euler();
 const quat = new THREE.Quaternion();
 
-// Lerp factor for smooth animation
-const LERP_FACTOR = 0.5;
+// Lerp factor for smooth animation (lower = smoother but more latency)
+const LERP_FACTOR = 0.08;
+const LERP_FACTOR_SLOW = 0.04;
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
@@ -35,6 +36,7 @@ const prev = {
 export function applyTracking(vrm: VRM, result: TrackingResult): void {
   applyFaceTracking(vrm, result);
   applyPoseTracking(vrm, result);
+  applyHandTracking(vrm, result);
 }
 
 function applyFaceTracking(vrm: VRM, result: TrackingResult): void {
@@ -46,18 +48,25 @@ function applyFaceTracking(vrm: VRM, result: TrackingResult): void {
   const matrix = face.facialTransformationMatrixes?.[0];
 
   // Apply head rotation from transformation matrix
-  if (matrix) {
+  // MediaPipe coord: X-right, Y-down, Z-away from camera
+  // VRM coord: X-right, Y-up, Z-toward camera
+  // So: pitch needs negation (Y flipped), yaw needs negation (mirrored webcam),
+  // roll needs negation
+  const headBone = vrm.humanoid.getNormalizedBoneNode("head");
+  if (headBone && matrix) {
     const m = new THREE.Matrix4().fromArray(matrix.data);
-    const rotation = new THREE.Euler().setFromRotationMatrix(m);
+    const rot = new THREE.Euler().setFromRotationMatrix(m);
 
-    const headBone = vrm.humanoid.getNormalizedBoneNode("head");
-    if (headBone) {
-      prev.headRotX = lerp(prev.headRotX, rotation.x, LERP_FACTOR);
-      prev.headRotY = lerp(prev.headRotY, rotation.y, LERP_FACTOR);
-      prev.headRotZ = lerp(prev.headRotZ, rotation.z, LERP_FACTOR);
-      headBone.rotation.set(prev.headRotX, prev.headRotY, prev.headRotZ);
-    }
-  } else if (landmarks.length >= 468) {
+    // Convert from MediaPipe to VRM coordinate space
+    const pitch = clamp(-rot.x * 0.8, -0.5, 0.5);
+    const yaw = clamp(rot.y * 0.8, -0.8, 0.8);
+    const roll = clamp(-rot.z * 0.8, -0.4, 0.4);
+
+    prev.headRotX = lerp(prev.headRotX, pitch, LERP_FACTOR);
+    prev.headRotY = lerp(prev.headRotY, yaw, LERP_FACTOR);
+    prev.headRotZ = lerp(prev.headRotZ, roll, LERP_FACTOR);
+    headBone.rotation.set(prev.headRotX, prev.headRotY, prev.headRotZ);
+  } else if (headBone && landmarks.length >= 468) {
     // Fallback: estimate head rotation from landmarks
     const nose = landmarks[1];
     const leftEar = landmarks[234];
@@ -65,23 +74,18 @@ function applyFaceTracking(vrm: VRM, result: TrackingResult): void {
     const forehead = landmarks[10];
     const chin = landmarks[152];
 
-    const headBone = vrm.humanoid.getNormalizedBoneNode("head");
-    if (headBone) {
-      // Yaw from ear-to-ear midpoint vs nose
-      const earMidX = (leftEar.x + rightEar.x) / 2;
-      const yaw = (nose.x - earMidX) * 4;
+    const earMidX = (leftEar.x + rightEar.x) / 2;
+    const yaw = clamp((nose.x - earMidX) * 3, -0.8, 0.8);
+    const pitch = clamp((nose.y - (forehead.y + chin.y) / 2) * 2, -0.5, 0.5);
+    const roll = clamp(
+      -Math.atan2(rightEar.y - leftEar.y, rightEar.x - leftEar.x),
+      -0.4, 0.4,
+    );
 
-      // Pitch from forehead-chin line
-      const pitch = (nose.y - (forehead.y + chin.y) / 2) * 3;
-
-      // Roll from ear tilt
-      const roll = Math.atan2(rightEar.y - leftEar.y, rightEar.x - leftEar.x);
-
-      prev.headRotX = lerp(prev.headRotX, pitch, LERP_FACTOR);
-      prev.headRotY = lerp(prev.headRotY, -yaw, LERP_FACTOR);
-      prev.headRotZ = lerp(prev.headRotZ, -roll, LERP_FACTOR);
-      headBone.rotation.set(prev.headRotX, prev.headRotY, prev.headRotZ);
-    }
+    prev.headRotX = lerp(prev.headRotX, -pitch, LERP_FACTOR);
+    prev.headRotY = lerp(prev.headRotY, yaw, LERP_FACTOR);
+    prev.headRotZ = lerp(prev.headRotZ, roll, LERP_FACTOR);
+    headBone.rotation.set(prev.headRotX, prev.headRotY, prev.headRotZ);
   }
 
   // Apply blendshapes (expressions)
@@ -143,8 +147,8 @@ function applyBlendshapes(vrm: VRM, categories: BlendshapeCategory[]): void {
   const lookUpLeft = map.get("eyeLookUpLeft") ?? 0;
   const lookDownLeft = map.get("eyeLookDownLeft") ?? 0;
 
-  const eyeX = (lookOutLeft - lookInLeft) * 0.8;
-  const eyeY = (lookUpLeft - lookDownLeft) * 0.5;
+  const eyeX = clamp((lookOutLeft - lookInLeft) * 0.3, -0.15, 0.15);
+  const eyeY = clamp((lookUpLeft - lookDownLeft) * 0.2, -0.1, 0.1);
 
   const leftEye = vrm.humanoid.getNormalizedBoneNode("leftEye");
   const rightEye = vrm.humanoid.getNormalizedBoneNode("rightEye");
@@ -170,95 +174,324 @@ function applyPoseTracking(vrm: VRM, result: TrackingResult): void {
   const rightElbow = landmarks[14];
   const leftWrist = landmarks[15];
   const rightWrist = landmarks[16];
-  const leftHip = landmarks[23];
-  const rightHip = landmarks[24];
 
-  // Spine rotation from shoulder/hip alignment
+  // Spine rotation from shoulder tilt (subtle)
   const spineNode = vrm.humanoid.getNormalizedBoneNode("spine");
   if (spineNode) {
-    const shoulderMidX = (leftShoulder.x + rightShoulder.x) / 2;
-    const hipMidX = (leftHip.x + rightHip.x) / 2;
-    const shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
-    const hipMidY = (leftHip.y + rightHip.y) / 2;
+    // Slight shoulder tilt → spine roll
+    const shoulderDy = rightShoulder.y - leftShoulder.y;
+    const spineRoll = clamp(shoulderDy * 0.3, -0.05, 0.05);
 
-    const spineYaw = (shoulderMidX - hipMidX) * 2;
-    const spinePitch = (shoulderMidY - hipMidY - 0.3) * 1.5;
+    // Body turn from depth difference
+    const shoulderDz = (rightShoulder.z - leftShoulder.z);
+    const spineYaw = clamp(shoulderDz * 0.5, -0.08, 0.08);
 
-    prev.spineRotX = lerp(prev.spineRotX, clamp(spinePitch, -0.3, 0.3), LERP_FACTOR * 0.5);
-    prev.spineRotY = lerp(prev.spineRotY, clamp(-spineYaw, -0.5, 0.5), LERP_FACTOR * 0.5);
-    spineNode.rotation.set(prev.spineRotX, prev.spineRotY, 0);
-  }
-
-  // Left arm
-  const leftUpperArm = vrm.humanoid.getNormalizedBoneNode("leftUpperArm");
-  const leftLowerArm = vrm.humanoid.getNormalizedBoneNode("leftLowerArm");
-  if (leftUpperArm) {
-    const armAngle = computeArmAngle(leftShoulder, leftElbow, true);
-    prev.leftUpperArmZ = lerp(prev.leftUpperArmZ, armAngle.z, LERP_FACTOR);
-    euler.set(armAngle.x, 0, prev.leftUpperArmZ);
-    quat.setFromEuler(euler);
-    leftUpperArm.quaternion.copy(quat);
-  }
-  if (leftLowerArm && leftElbow && leftWrist) {
-    const forearmAngle = computeForearmAngle(leftShoulder, leftElbow, leftWrist);
-    euler.set(0, forearmAngle.y, 0);
-    quat.setFromEuler(euler);
-    leftLowerArm.quaternion.copy(quat);
+    prev.spineRotY = lerp(prev.spineRotY, spineYaw, 0.02);
+    prev.spineRotX = lerp(prev.spineRotX, spineRoll, 0.02);
+    spineNode.rotation.set(0, prev.spineRotY, prev.spineRotX);
   }
 
-  // Right arm
-  const rightUpperArm = vrm.humanoid.getNormalizedBoneNode("rightUpperArm");
-  const rightLowerArm = vrm.humanoid.getNormalizedBoneNode("rightLowerArm");
-  if (rightUpperArm) {
-    const armAngle = computeArmAngle(rightShoulder, rightElbow, false);
-    prev.rightUpperArmZ = lerp(prev.rightUpperArmZ, armAngle.z, LERP_FACTOR);
-    euler.set(armAngle.x, 0, prev.rightUpperArmZ);
-    quat.setFromEuler(euler);
-    rightUpperArm.quaternion.copy(quat);
-  }
-  if (rightLowerArm && rightElbow && rightWrist) {
-    const forearmAngle = computeForearmAngle(rightShoulder, rightElbow, rightWrist);
-    euler.set(0, -forearmAngle.y, 0);
-    quat.setFromEuler(euler);
-    rightLowerArm.quaternion.copy(quat);
-  }
+  applyArm(vrm, leftShoulder, leftElbow, leftWrist, true);
+  applyArm(vrm, rightShoulder, rightElbow, rightWrist, false);
 }
 
 interface Landmark {
   x: number;
   y: number;
   z: number;
+  visibility?: number;
 }
 
-function computeArmAngle(
-  shoulder: Landmark,
-  elbow: Landmark,
-  isLeft: boolean,
-): { x: number; z: number } {
-  const dx = elbow.x - shoulder.x;
-  const dy = elbow.y - shoulder.y;
+// Minimum visibility to trust a landmark (0..1)
+const VISIBILITY_THRESHOLD = 0.5;
 
-  // Z rotation: arm raise (positive = raise for left, negative for right)
-  const raise = Math.atan2(-dy, isLeft ? dx : -dx);
-  const z = clamp(isLeft ? raise : -raise, isLeft ? 0 : -Math.PI / 2, isLeft ? Math.PI / 2 : 0);
+// Default rest pose (arms naturally at sides)
+const REST_UPPER_Z_LEFT = 1.2;
+const REST_UPPER_Z_RIGHT = -1.2;
+const REST_LOWER_Y_LEFT = -0.3;
+const REST_LOWER_Y_RIGHT = 0.3;
 
-  // X rotation: arm forward/back
-  const dz = elbow.z - shoulder.z;
-  const x = clamp(dz * 3, -0.5, 0.5);
+// Previous arm values for smoothing
+const prevArm = {
+  leftUpperZ: REST_UPPER_Z_LEFT,
+  leftLowerY: REST_LOWER_Y_LEFT,
+  rightUpperZ: REST_UPPER_Z_RIGHT,
+  rightLowerY: REST_LOWER_Y_RIGHT,
+};
 
-  return { x, z };
-}
-
-function computeForearmAngle(
+function applyArm(
+  vrm: VRM,
   shoulder: Landmark,
   elbow: Landmark,
   wrist: Landmark,
-): { y: number } {
-  const upperDx = elbow.x - shoulder.x;
-  const upperDy = elbow.y - shoulder.y;
-  const lowerDx = wrist.x - elbow.x;
-  const lowerDy = wrist.y - elbow.y;
+  isLeft: boolean,
+): void {
+  const upperArm = vrm.humanoid.getNormalizedBoneNode(isLeft ? "leftUpperArm" : "rightUpperArm");
+  const lowerArm = vrm.humanoid.getNormalizedBoneNode(isLeft ? "leftLowerArm" : "rightLowerArm");
 
-  const angle = Math.atan2(lowerDy, lowerDx) - Math.atan2(upperDy, upperDx);
-  return { y: clamp(angle, -Math.PI * 0.8, 0) };
+  if (!upperArm) return;
+
+  const pZ = isLeft ? "leftUpperZ" : "rightUpperZ";
+  const pY = isLeft ? "leftLowerY" : "rightLowerY";
+
+  // Check visibility of elbow (key joint for arm tracking)
+  const elbowVisible = (elbow.visibility ?? 0) >= VISIBILITY_THRESHOLD;
+  const wristVisible = (wrist.visibility ?? 0) >= VISIBILITY_THRESHOLD;
+
+  if (!elbowVisible) {
+    // Low confidence: smoothly return to rest pose
+    const restZ = isLeft ? REST_UPPER_Z_LEFT : REST_UPPER_Z_RIGHT;
+    const restY = isLeft ? REST_LOWER_Y_LEFT : REST_LOWER_Y_RIGHT;
+    prevArm[pZ] = lerp(prevArm[pZ], restZ, LERP_FACTOR_SLOW);
+    prevArm[pY] = lerp(prevArm[pY], restY, LERP_FACTOR_SLOW);
+
+    euler.set(0, 0, prevArm[pZ]);
+    quat.setFromEuler(euler);
+    upperArm.quaternion.copy(quat);
+
+    if (lowerArm) {
+      euler.set(0, prevArm[pY], 0);
+      quat.setFromEuler(euler);
+      lowerArm.quaternion.copy(quat);
+    }
+    return;
+  }
+
+  // MediaPipe: x goes right, y goes down in normalized image coords
+  const dx = elbow.x - shoulder.x;
+  const dy = elbow.y - shoulder.y;
+
+  // Upper arm Z rotation (raise/lower)
+  // VRM T-pose: Z=0 is arms horizontal. Negative Z (left) / Positive Z (right) = arms down
+  // atan2(dx, dy): 0 when elbow directly below, PI/2 when elbow to the side
+  const armAngle = Math.atan2(isLeft ? dx : -dx, dy);
+  // Map: 0 (down) → negative Z for left / positive Z for right, PI/2 (horizontal) → 0
+  const upperZ = isLeft
+    ? clamp(-(armAngle - Math.PI / 2), -Math.PI / 2, Math.PI / 2)
+    : clamp(armAngle - Math.PI / 2, -Math.PI / 2, Math.PI / 2);
+
+  prevArm[pZ] = lerp(prevArm[pZ], upperZ, LERP_FACTOR * 1.5);
+
+  euler.set(0, 0, prevArm[pZ]);
+  quat.setFromEuler(euler);
+  upperArm.quaternion.copy(quat);
+
+  // Lower arm (forearm bend)
+  if (lowerArm && wristVisible) {
+    const upperLen = Math.sqrt(dx * dx + dy * dy);
+    const lowerDx = wrist.x - elbow.x;
+    const lowerDy = wrist.y - elbow.y;
+    const lowerLen = Math.sqrt(lowerDx * lowerDx + lowerDy * lowerDy);
+
+    const dot = (dx * lowerDx + dy * lowerDy) / (upperLen * lowerLen + 0.001);
+    const bendAngle = Math.acos(clamp(dot, -1, 1));
+
+    const lowerY = isLeft
+      ? clamp(-bendAngle, -2.5, 0)
+      : clamp(bendAngle, 0, 2.5);
+
+    prevArm[pY] = lerp(prevArm[pY], lowerY, LERP_FACTOR);
+  } else if (lowerArm) {
+    // Wrist not visible: relax forearm to rest
+    const restY = isLeft ? REST_LOWER_Y_LEFT : REST_LOWER_Y_RIGHT;
+    prevArm[pY] = lerp(prevArm[pY], restY, LERP_FACTOR_SLOW);
+  }
+
+  if (lowerArm) {
+    euler.set(0, prevArm[pY], 0);
+    quat.setFromEuler(euler);
+    lowerArm.quaternion.copy(quat);
+  }
+}
+
+// --- Hand / Finger tracking ---
+
+// MediaPipe hand landmark indices
+// 0: wrist, 1-4: thumb, 5-8: index, 9-12: middle, 13-16: ring, 17-20: pinky
+// Each finger: [MCP, PIP, DIP, TIP]
+
+// MediaPipe hand landmark indices per finger:
+// Thumb:  1=CMC, 2=MCP, 3=IP, 4=TIP
+// Others: MCP, PIP, DIP, TIP
+//
+// VRM bone names:
+// Thumb:  Metacarpal, Proximal, Distal
+// Others: Proximal, Intermediate, Distal
+const FINGER_MAP: Array<{
+  name: string;
+  indices: [number, number, number, number];
+  bones: [string, string, string];
+}> = [
+  { name: "thumb",  indices: [1, 2, 3, 4],     bones: ["Metacarpal", "Proximal", "Distal"] },
+  { name: "index",  indices: [5, 6, 7, 8],     bones: ["Proximal", "Intermediate", "Distal"] },
+  { name: "middle", indices: [9, 10, 11, 12],   bones: ["Proximal", "Intermediate", "Distal"] },
+  { name: "ring",   indices: [13, 14, 15, 16],  bones: ["Proximal", "Intermediate", "Distal"] },
+  { name: "little", indices: [17, 18, 19, 20],  bones: ["Proximal", "Intermediate", "Distal"] },
+];
+
+// Smoothed finger curl values: [left/right][finger][joint]
+const prevFingers: Record<string, number> = {};
+
+function fingerKey(side: string, finger: string, joint: number): string {
+  return `${side}_${finger}_${joint}`;
+}
+
+function applyHandTracking(vrm: VRM, result: TrackingResult): void {
+  const { hands } = result;
+  if (!hands?.landmarks?.length) return;
+
+  for (let h = 0; h < hands.landmarks.length; h++) {
+    const landmarks = hands.landmarks[h];
+    const handedness = hands.handedness[h]?.[0]?.categoryName;
+    if (!handedness || landmarks.length < 21) continue;
+
+    // MediaPipe "Left" hand in camera = user's left hand (when not mirrored)
+    // When mirrored, swap
+    const isLeft = handedness === "Left";
+
+    const side = isLeft ? "left" : "right";
+    const vrmSide = isLeft ? "left" : "right";
+
+    // Apply wrist/hand rotation from palm orientation
+    applyHandRotation(vrm, landmarks, isLeft);
+
+    for (const finger of FINGER_MAP) {
+      const [mcp, pip, dip, tip] = finger.indices;
+
+      for (let j = 0; j < 3; j++) {
+        const fromIdx = [mcp, pip, dip][j];
+        const toIdx = [pip, dip, tip][j];
+
+        const from = landmarks[fromIdx];
+        const to = landmarks[toIdx];
+
+        // Compute curl angle from consecutive landmarks
+        const parentIdx = j === 0 ? 0 : [mcp, pip, dip][j - 1];
+        const parent = landmarks[parentIdx];
+
+        const v1x = from.x - parent.x;
+        const v1y = from.y - parent.y;
+        const v2x = to.x - from.x;
+        const v2y = to.y - from.y;
+
+        const len1 = Math.sqrt(v1x * v1x + v1y * v1y) + 0.001;
+        const len2 = Math.sqrt(v2x * v2x + v2y * v2y) + 0.001;
+        const dot = (v1x * v2x + v1y * v2y) / (len1 * len2);
+        const angle = Math.acos(clamp(dot, -1, 1));
+
+        // Curl: 0 = straight, positive = curled
+        const curl = clamp(angle * 0.8, 0, Math.PI / 2);
+
+        const key = fingerKey(side, finger.name, j);
+        const prevVal = prevFingers[key] ?? 0;
+        prevFingers[key] = lerp(prevVal, curl, LERP_FACTOR);
+
+        // VRM bone name: e.g. "leftIndexProximal", "rightThumbDistal"
+        const capitalName = finger.name.charAt(0).toUpperCase() + finger.name.slice(1);
+        const boneName = `${vrmSide}${capitalName}${finger.bones[j]}`;
+        const bone = vrm.humanoid.getNormalizedBoneNode(boneName as VRMHumanBoneName);
+
+        if (bone) {
+          // Fingers curl around Z axis for VRM normalized bones
+          // Left hand: positive Z = curl inward, Right hand: negative Z = curl inward
+          const curlZ = isLeft ? prevFingers[key] : -prevFingers[key];
+
+          // Spread (abduction) on proximal bones only (Y axis)
+          let spreadY = 0;
+          if (j === 0 && finger.name !== "thumb") {
+            const spreadKey = fingerKey(side, finger.name, 99);
+            const fi = FINGER_MAP.indexOf(finger);
+            // Compute angle between this finger and middle finger (reference)
+            const thisTip = landmarks[finger.indices[3]];
+            const thisMcp = landmarks[finger.indices[0]];
+            const midTip = landmarks[12]; // middle finger tip
+            const midMcp = landmarks[9];  // middle finger MCP
+
+            const ax = thisTip.x - thisMcp.x;
+            const ay = thisTip.y - thisMcp.y;
+            const bx = midTip.x - midMcp.x;
+            const by = midTip.y - midMcp.y;
+
+            const lenA = Math.sqrt(ax * ax + ay * ay) + 0.001;
+            const lenB = Math.sqrt(bx * bx + by * by) + 0.001;
+            const cross = ax * by - ay * bx;
+            const spreadAngle = Math.asin(clamp(cross / (lenA * lenB), -1, 1));
+
+            // Scale spread; fingers further from middle get more spread
+            const spreadScale = fi <= 2 ? 0.6 : 0.8;
+            const targetSpread = clamp(spreadAngle * spreadScale, -0.4, 0.4);
+
+            const prevSpread = prevFingers[spreadKey] ?? 0;
+            prevFingers[spreadKey] = lerp(prevSpread, targetSpread, LERP_FACTOR);
+            spreadY = prevFingers[spreadKey];
+          }
+
+          bone.rotation.set(0, spreadY, curlZ);
+        }
+      }
+    }
+  }
+}
+
+// Smoothed hand rotation values
+const prevHandRot: Record<string, number> = {};
+
+function applyHandRotation(
+  vrm: VRM,
+  landmarks: Array<{ x: number; y: number; z: number }>,
+  isLeft: boolean,
+): void {
+  const handBone = vrm.humanoid.getNormalizedBoneNode(
+    isLeft ? "leftHand" : "rightHand",
+  );
+  if (!handBone) return;
+
+  const wrist = landmarks[0];
+  const indexMcp = landmarks[5];
+  const pinkyMcp = landmarks[17];
+  const middleMcp = landmarks[9];
+
+  // Palm direction: wrist → middle MCP
+  const palmDx = middleMcp.x - wrist.x;
+  const palmDy = middleMcp.y - wrist.y;
+  const palmDz = middleMcp.z - wrist.z;
+
+  // Palm width: index MCP → pinky MCP
+  const widthDx = pinkyMcp.x - indexMcp.x;
+  const widthDy = pinkyMcp.y - indexMcp.y;
+  const widthDz = pinkyMcp.z - indexMcp.z;
+
+  // Palm normal via cross product
+  const nx = palmDy * widthDz - palmDz * widthDy;
+  const nz = palmDx * widthDy - palmDy * widthDx;
+
+  // Hand Z rotation (wrist flex/extend): angle of palm direction from horizontal
+  // MediaPipe Y is down, so -palmDy = upward component
+  const wristFlex = clamp(
+    Math.atan2(-palmDy, Math.sqrt(palmDx * palmDx + palmDz * palmDz)) * 0.4,
+    -0.6, 0.6,
+  );
+
+  // Hand X rotation (wrist deviation: radial/ulnar)
+  // Determined by the palm width vector tilt
+  const wristDeviation = clamp(widthDy * 2, -0.3, 0.3);
+
+  // Forearm twist (pronation/supination): determined by palm normal Z component
+  // When palm faces camera (nz > 0 for left), forearm is supinated
+  const twist = clamp(
+    Math.atan2(nx, nz) * 0.5,
+    -1.0, 1.0,
+  );
+
+  const side = isLeft ? "left" : "right";
+  const pFlex = `${side}_hand_flex`;
+  const pDev = `${side}_hand_dev`;
+  const pTwist = `${side}_forearm_twist`;
+
+  prevHandRot[pFlex] = lerp(prevHandRot[pFlex] ?? 0, wristFlex, LERP_FACTOR);
+  prevHandRot[pDev] = lerp(prevHandRot[pDev] ?? 0, wristDeviation, LERP_FACTOR);
+  prevHandRot[pTwist] = lerp(prevHandRot[pTwist] ?? 0, twist, LERP_FACTOR);
+
+  // Apply wrist flex/deviation to hand bone
+  handBone.rotation.set(prevHandRot[pDev], 0, prevHandRot[pFlex]);
 }

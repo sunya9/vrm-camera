@@ -84,6 +84,9 @@ export async function loadVRM(
           vrmScene.scene.remove(vrmScene.vrm.scene);
         }
 
+        // VRM 1.0 models face +Z, rotate to face camera (-Z)
+        vrm.scene.rotation.y = Math.PI;
+
         vrmScene.scene.add(vrm.scene);
         vrmScene.vrm = vrm;
 
@@ -107,4 +110,12 @@ export function resizeRenderer(vrmScene: VRMScene, width: number, height: number
   vrmScene.camera.aspect = width / height;
   vrmScene.camera.updateProjectionMatrix();
   vrmScene.renderer.setSize(width, height);
+}
+
+export function setBackground(vrmScene: VRMScene, color: string | null): void {
+  if (color) {
+    vrmScene.scene.background = new THREE.Color(color);
+  } else {
+    vrmScene.scene.background = null;
+  }
 }
