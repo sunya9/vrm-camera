@@ -50,7 +50,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # Desktop: Build Tauri app and attach to GitHub Release
+  # Desktop: Build Tauri app and upload to existing GitHub Release
   tauri-build:
     strategy:
       fail-fast: false
@@ -84,14 +84,14 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Build and release
+      - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "VRM Camera ${{ github.ref_name }}"
-          releaseBody: "See the changelog for details."
-          releaseDraft: true
+          releaseBody: ""
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
