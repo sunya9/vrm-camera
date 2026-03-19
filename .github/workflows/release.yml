@@ -1,4 +1,4 @@
-name: Release Tauri App
+name: Release
 
 on:
   push:
@@ -8,9 +8,50 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-  release:
+  # Web: Build and deploy to GitHub Pages
+  web-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  web-deploy:
+    needs: web-build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Desktop: Build Tauri app and attach to GitHub Release
+  tauri-build:
     strategy:
       fail-fast: false
       matrix:
@@ -19,11 +60,6 @@ jobs:
             args: --target aarch64-apple-darwin
           - platform: macos-latest
             args: --target x86_64-apple-darwin
-          # Uncomment to add more platforms:
-          # - platform: ubuntu-22.04
-          #   args: ""
-          # - platform: windows-latest
-          #   args: ""
 
     runs-on: ${{ matrix.platform }}
     steps:
