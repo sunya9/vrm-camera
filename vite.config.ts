@@ -1,14 +1,11 @@
-import path from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    tsconfigPaths: true,
   },
   plugins: [
     react(),
@@ -22,14 +19,5 @@ export default defineConfig({
       ],
     }),
   ],
-  base: "./",
-  server: {
-    port: 5173,
-    strictPort: true,
-    hmr: {
-      protocol: "ws",
-      host: "localhost",
-      port: 5173,
-    },
-  },
-})
+  base: mode === "tauri" ? "/" : "/vrm-camera/",
+}));

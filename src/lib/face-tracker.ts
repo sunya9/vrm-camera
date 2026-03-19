@@ -30,14 +30,15 @@ export interface TrackerOptions {
 export async function createFaceTracker(
   options: TrackerOptions = {},
 ): Promise<FaceTracker> {
-  const vision = await FilesetResolver.forVisionTasks(
-    "/mediapipe/wasm",
-  );
+  const base = import.meta.env.BASE_URL;
+  const vision = await FilesetResolver.forVisionTasks(`${base}mediapipe/wasm`);
+
+  const delegate = "GPU";
 
   const faceLandmarkerPromise = FaceLandmarker.createFromOptions(vision, {
     baseOptions: {
-      modelAssetPath: "/mediapipe/models/face_landmarker.task",
-      delegate: "GPU",
+      modelAssetPath: `${base}mediapipe/models/face_landmarker.task`,
+      delegate,
     },
     runningMode: "VIDEO",
     numFaces: 1,
@@ -47,8 +48,8 @@ export async function createFaceTracker(
 
   const poseLandmarkerPromise = PoseLandmarker.createFromOptions(vision, {
     baseOptions: {
-      modelAssetPath: "/mediapipe/models/pose_landmarker_full.task",
-      delegate: "GPU",
+      modelAssetPath: `${base}mediapipe/models/pose_landmarker_full.task`,
+      delegate,
     },
     runningMode: "VIDEO",
     numPoses: 1,
@@ -57,8 +58,8 @@ export async function createFaceTracker(
   const handLandmarkerPromise = options.enableHands
     ? HandLandmarker.createFromOptions(vision, {
         baseOptions: {
-          modelAssetPath: "/mediapipe/models/hand_landmarker.task",
-          delegate: "GPU",
+          modelAssetPath: `${base}mediapipe/models/hand_landmarker.task`,
+          delegate,
         },
         runningMode: "VIDEO",
         numHands: 2,

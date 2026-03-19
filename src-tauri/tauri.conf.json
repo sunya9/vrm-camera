@@ -5,7 +5,9 @@
   "identifier": "dev.vrm-camera.app",
   "build": {
     "frontendDist": "../dist",
-    "devUrl": "http://localhost:5173"
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "pnpm vite --mode tauri",
+    "beforeBuildCommand": "pnpm vite build --mode tauri"
   },
   "app": {
     "windows": [

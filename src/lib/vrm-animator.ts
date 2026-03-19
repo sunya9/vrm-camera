@@ -33,6 +33,20 @@ const prev = {
   rightUpperArmZ: -0.3,
 };
 
+export function resetAnimatorState(): void {
+  prev.headRotX = 0;
+  prev.headRotY = 0;
+  prev.headRotZ = 0;
+  prev.spineRotX = 0;
+  prev.spineRotY = 0;
+  prevArm.leftUpperZ = REST_UPPER_Z_LEFT;
+  prevArm.leftLowerY = REST_LOWER_Y_LEFT;
+  prevArm.rightUpperZ = REST_UPPER_Z_RIGHT;
+  prevArm.rightLowerY = REST_LOWER_Y_RIGHT;
+  for (const key of Object.keys(prevFingers)) delete prevFingers[key];
+  for (const key of Object.keys(prevHandRot)) delete prevHandRot[key];
+}
+
 export function applyTracking(vrm: VRM, result: TrackingResult): void {
   applyFaceTracking(vrm, result);
   applyPoseTracking(vrm, result);

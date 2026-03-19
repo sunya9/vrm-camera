@@ -13,16 +13,6 @@ body,
   overflow: hidden;
 }
 
-@layer components {
-  .btn {
-    @apply px-3 py-1.5 rounded-md bg-[#0f3460] text-gray-200 text-sm cursor-pointer
-           hover:bg-[#1a4a8a] transition-colors;
-  }
-  .btn-active {
-    @apply bg-orange-600 hover:bg-orange-700;
-  }
-}
-
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -93,7 +83,7 @@ body,
 }
 
 @theme inline {
-  --font-sans: 'Geist Variable', sans-serif;
+  --font-sans: "Geist Variable", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
