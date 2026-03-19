@@ -15,7 +15,7 @@ import {
   PanelBottomClose,
 } from "lucide-react";
 import { ControlsTab } from "./tabs/ControlsTab";
-import { BackgroundTab } from "./tabs/BackgroundTab";
+import { BackgroundTab, type BgChange } from "./tabs/BackgroundTab";
 import { EffectsTab } from "./tabs/EffectsTab";
 import { LightingTab } from "./tabs/LightingTab";
 import { ExpressionTab } from "./tabs/ExpressionTab";
@@ -24,7 +24,7 @@ import { AboutTab } from "./tabs/AboutTab";
 import { cn } from "@/lib/utils";
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 
-export interface ControlTabsProps extends TabsPrimitive.Root.Props {
+interface ControlTabsProps extends TabsPrimitive.Root.Props {
   vrmName: string | null;
   fps: number;
   tracking: boolean;
@@ -43,7 +43,7 @@ export interface ControlTabsProps extends TabsPrimitive.Root.Props {
   onToggleTracking: () => void;
   onSetMirror: (v: boolean) => void;
   onSetHandTracking: (v: boolean) => void;
-  onSetBackground: (change: import("./tabs/BackgroundTab").BgChange) => void;
+  onSetBackground: (change: BgChange) => void;
   onSetLighting: (settings: LightingSettings) => void;
   onSetShowLightHelper: (v: boolean) => void;
   onSetEffects: (settings: EffectSettings) => void;

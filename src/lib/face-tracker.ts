@@ -23,7 +23,7 @@ export interface FaceTracker {
   dispose: () => void;
 }
 
-export interface TrackerOptions {
+interface TrackerOptions {
   enableHands?: boolean;
 }
 
