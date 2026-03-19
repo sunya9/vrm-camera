@@ -15,6 +15,7 @@ import type { FaceTracker } from "@/lib/face-tracker";
 interface VRMModelProps {
   url: string | null;
   tracker: FaceTracker | null;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   expressionOverrides: Record<string, number>;
   onLoaded?: (vrm: VRM) => void;
   onLoadingChange?: (loading: boolean) => void;
@@ -23,20 +24,13 @@ interface VRMModelProps {
 export function VRMModel({
   url,
   tracker,
+  videoRef,
   expressionOverrides,
   onLoaded,
   onLoadingChange,
 }: VRMModelProps) {
   const [vrm, setVrm] = useState<VRM | null>(null);
   const groupRef = useRef<THREE.Group>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  // Find video element for tracking (set externally)
-  useEffect(() => {
-    videoRef.current = document.querySelector<HTMLVideoElement>(
-      "video[data-vrm-tracking]",
-    );
-  }, []);
 
   // Load VRM
   useEffect(() => {

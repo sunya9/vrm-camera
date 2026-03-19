@@ -15,6 +15,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 interface VRMCanvasProps {
   vrmUrl: string | null;
   tracker: FaceTracker | null;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   mirror: boolean;
   lighting: LightingSettings;
   showLightHelper: boolean;
@@ -46,6 +47,7 @@ function BackgroundImage({ url }: { url: string }) {
 export function VRMCanvas({
   vrmUrl,
   tracker,
+  videoRef,
   mirror,
   lighting,
   showLightHelper: showHelper,
@@ -159,6 +161,7 @@ export function VRMCanvas({
           <VRMModel
             url={vrmUrl}
             tracker={tracker}
+            videoRef={videoRef}
             expressionOverrides={expressionOverrides}
             onLoaded={onVRMLoaded}
             onLoadingChange={onVRMLoadingChange}

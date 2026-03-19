@@ -432,6 +432,7 @@ export function VRMViewer() {
         <VRMCanvas
           vrmUrl={vrmUrl}
           tracker={activeTracker}
+          videoRef={videoRef}
           mirror={mirror}
           lighting={lighting}
           showLightHelper={computedShowLightHelper}
@@ -457,13 +458,7 @@ export function VRMViewer() {
         </div>
       )}
 
-      <video
-        ref={videoRef}
-        data-vrm-tracking
-        className="absolute -left-full h-px w-px"
-        playsInline
-        muted
-      />
+      <video ref={videoRef} className="absolute -left-full h-px w-px" playsInline muted />
 
       <ControlTabs
         vrmName={vrmName}
