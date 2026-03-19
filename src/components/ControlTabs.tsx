@@ -20,6 +20,7 @@ import { EffectsTab } from "./tabs/EffectsTab";
 import { LightingTab } from "./tabs/LightingTab";
 import { ExpressionTab } from "./tabs/ExpressionTab";
 import { LogTab } from "./tabs/LogTab";
+import { AboutTab } from "./tabs/AboutTab";
 import { cn } from "@/lib/utils";
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 
@@ -101,6 +102,7 @@ export function ControlTabs({
           <TabsTrigger value="lighting">ライト</TabsTrigger>
           <TabsTrigger value="expression">表情</TabsTrigger>
           <TabsTrigger value="log">ログ</TabsTrigger>
+          <TabsTrigger value="about">About</TabsTrigger>
         </TabsList>
         <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
           <span>{vrmName}</span>
@@ -190,6 +192,10 @@ export function ControlTabs({
 
         <TabsContent value="log">
           <LogTab logs={logs} />
+        </TabsContent>
+
+        <TabsContent value="about">
+          <AboutTab />
         </TabsContent>
       </div>
     </Tabs>
