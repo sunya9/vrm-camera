@@ -1,15 +1,5 @@
-import {
-  useEffect,
-  useRef,
-  useCallback,
-  useState,
-  useEffectEvent,
-} from "react";
-import {
-  createFaceTracker,
-  setupWebcam,
-  type FaceTracker,
-} from "@/lib/face-tracker";
+import { useEffect, useRef, useCallback, useState, useEffectEvent } from "react";
+import { createFaceTracker, setupWebcam, type FaceTracker } from "@/lib/face-tracker";
 import { resetAnimatorState } from "@/lib/vrm-animator";
 import { cacheVRM, loadCachedVRM } from "@/lib/vrm-cache";
 import { usePersistedState } from "@/lib/use-persisted-state";
@@ -39,41 +29,19 @@ export function VRMViewer() {
   const [vrmUrl, setVrmUrl] = useState<string | null>(null);
   const [vrmName, setVrmName] = useState<string | null>(null);
   const [tracking, setTracking] = usePersistedState("tracking", false);
-  const [handTracking, setHandTracking] = usePersistedState(
-    "handTracking",
-    true,
-  );
+  const [handTracking, setHandTracking] = usePersistedState("handTracking", true);
   const [mirror, setMirror] = usePersistedState("mirror", true);
   const [showControls, setShowControls] = useState(true);
   const [activeTab, setActiveTab] = usePersistedState("activeTab", "controls");
-  const [bgColor, setBgColor] = usePersistedState<string | null>(
-    "bgColor",
-    null,
-  );
-  const [bgImage, setBgImage] = usePersistedState<string | null>(
-    "bgImage",
-    null,
-  );
+  const [bgColor, setBgColor] = usePersistedState<string | null>("bgColor", null);
+  const [bgImage, setBgImage] = usePersistedState<string | null>("bgImage", null);
   const [activeExpression, setActiveExpression] = useState<string | null>(null);
-  const [lighting, setLighting] = usePersistedState<LightingSettings>(
-    "lighting",
-    DEFAULT_LIGHTING,
-  );
-  const [effects, setEffects] = usePersistedState<EffectSettings>(
-    "effects",
-    DEFAULT_EFFECTS,
-  );
-  const [cameraState, setCameraState] = usePersistedState<CameraState>(
-    "camera",
-    DEFAULT_CAMERA,
-  );
-  const [showLightHelper, setShowLightHelper] = usePersistedState(
-    "showLightHelper",
-    true,
-  );
+  const [lighting, setLighting] = usePersistedState<LightingSettings>("lighting", DEFAULT_LIGHTING);
+  const [effects, setEffects] = usePersistedState<EffectSettings>("effects", DEFAULT_EFFECTS);
+  const [cameraState, setCameraState] = usePersistedState<CameraState>("camera", DEFAULT_CAMERA);
+  const [showLightHelper, setShowLightHelper] = usePersistedState("showLightHelper", true);
   const [remoteLightTab, setRemoteLightTab] = useState(false);
-  const isOnLightTab =
-    (activeTab === "lighting" && showControls) || remoteLightTab;
+  const isOnLightTab = (activeTab === "lighting" && showControls) || remoteLightTab;
   const computedShowLightHelper = isOnLightTab && showLightHelper;
   const [vrmLoading, setVrmLoading] = useState(false);
   const [fps, setFps] = useState(0);
@@ -114,7 +82,6 @@ export function VRMViewer() {
         }
       })
       .catch(() => log("VRMファイルを選択してください"));
-
   }, []);
 
   const onVRMLoaded = useCallback(
@@ -186,9 +153,7 @@ export function VRMViewer() {
   }, [tracking, setTracking]);
 
   // BroadcastChannel
-  const channelRef = useRef<ReturnType<typeof createControlChannel> | null>(
-    null,
-  );
+  const channelRef = useRef<ReturnType<typeof createControlChannel> | null>(null);
 
   const triggerExpression = useCallback(
     (name: string, duration = 2000) => {
@@ -451,7 +416,7 @@ export function VRMViewer() {
   }, [addLog]);
   return (
     <div
-      className="relative h-screen w-screen bg-background text-foreground select-none overflow-hidden"
+      className="relative h-screen w-screen overflow-hidden bg-background text-foreground select-none"
       onPointerDown={(e) => {
         pointerDownPos.current = { x: e.clientX, y: e.clientY };
       }}
@@ -495,7 +460,7 @@ export function VRMViewer() {
       <video
         ref={videoRef}
         data-vrm-tracking
-        className="absolute -left-full w-px h-px"
+        className="absolute -left-full h-px w-px"
         playsInline
         muted
       />
@@ -517,9 +482,16 @@ export function VRMViewer() {
         onSetMirror={setMirror}
         onSetHandTracking={setHandTracking}
         onSetBackground={(change) => {
-          if (change.type === "color") { setBgColor(change.color); setBgImage(null); }
-          else if (change.type === "image") { setBgImage(change.url); setBgColor(null); }
-          else { setBgColor(null); setBgImage(null); }
+          if (change.type === "color") {
+            setBgColor(change.color);
+            setBgImage(null);
+          } else if (change.type === "image") {
+            setBgImage(change.url);
+            setBgColor(null);
+          } else {
+            setBgColor(null);
+            setBgImage(null);
+          }
         }}
         onSetLighting={setLighting}
         onSetShowLightHelper={setShowLightHelper}
@@ -532,7 +504,7 @@ export function VRMViewer() {
         onOpenControlPanel={openControlPanel}
         onTabChange={setActiveTab}
         className={cn(
-          "absolute bottom-0 left-0 right-0 z-20 bg-background/80 backdrop-blur-md border-t border-border shadow-lg transition-transform duration-200 ease-out",
+          "absolute right-0 bottom-0 left-0 z-20 border-t border-border bg-background/80 shadow-lg backdrop-blur-md transition-transform duration-200 ease-out",
           {
             "translate-y-0": showControls,
             "translate-y-full": !showControls,

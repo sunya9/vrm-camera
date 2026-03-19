@@ -9,7 +9,13 @@ export type ControlCommand =
   | { command: "toggleTracking" }
   | { command: "setMirror"; value: boolean }
   | { command: "setHandTracking"; value: boolean }
-  | { command: "setBackground"; value: { type: "color"; color: string | null } | { type: "image"; url: string } | { type: "clear" } }
+  | {
+      command: "setBackground";
+      value:
+        | { type: "color"; color: string | null }
+        | { type: "image"; url: string }
+        | { type: "clear" };
+    }
   | { command: "setLighting"; value: LightingSettings }
   | { command: "setShowLightHelper"; value: boolean }
   | { command: "setEffects"; value: EffectSettings }
@@ -40,9 +46,7 @@ export interface ControlState {
   logs: LogEntry[];
 }
 
-export function createControlChannel(
-  onMessage: (msg: ControlMessage) => void,
-): {
+export function createControlChannel(onMessage: (msg: ControlMessage) => void): {
   send: (msg: ControlMessage) => void;
   close: () => void;
 } {

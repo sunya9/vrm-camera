@@ -3,17 +3,8 @@ import type { EffectSettings } from "@/lib/effects";
 import type { LogEntry } from "@/lib/log-store";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Video,
-  PersonStanding,
-  PanelBottomOpen,
-  PanelBottomClose,
-} from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Video, PersonStanding, PanelBottomOpen, PanelBottomClose } from "lucide-react";
 import { ControlsTab } from "./tabs/ControlsTab";
 import { BackgroundTab, type BgChange } from "./tabs/BackgroundTab";
 import { EffectsTab } from "./tabs/EffectsTab";
@@ -94,7 +85,7 @@ export function ControlTabs({
       className={cn("w-full rounded-t-xl", className)}
       {...props}
     >
-      <div className="flex items-center px-4 pt-2 gap-2 shrink-0 ">
+      <div className="flex shrink-0 items-center gap-2 px-4 pt-2 ">
         <TabsList variant="line">
           <TabsTrigger value="controls">コントロール</TabsTrigger>
           <TabsTrigger value="background">背景</TabsTrigger>
@@ -130,20 +121,14 @@ export function ControlTabs({
           <Tooltip>
             <TooltipTrigger
               render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onOpenControlPanel}
-                >
+                <Button variant="ghost" size="icon" onClick={onOpenControlPanel}>
                   {isDetached ? <PanelBottomClose /> : <PanelBottomOpen />}
                 </Button>
               }
             />
 
             <TooltipContent>
-              {isDetached
-                ? "ウィンドウを閉じて統合"
-                : "コントロールを別ウィンドウに分離"}
+              {isDetached ? "ウィンドウを閉じて統合" : "コントロールを別ウィンドウに分離"}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -163,11 +148,7 @@ export function ControlTabs({
         </TabsContent>
 
         <TabsContent value="background">
-          <BackgroundTab
-            bgColor={bgColor}
-            bgImage={bgImage}
-            onSetBackground={onSetBackground}
-          />
+          <BackgroundTab bgColor={bgColor} bgImage={bgImage} onSetBackground={onSetBackground} />
         </TabsContent>
 
         <TabsContent value="effects">

@@ -1,15 +1,8 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "tags": [
-    "-lintignore"
-  ],
-  "entry": [
-    "**/*.d.ts"
-  ],
+  "tags": ["-lintignore"],
+  "entry": ["**/*.d.ts"],
   "ignoreIssues": {
-    "src/components/ui/**": [
-      "exports",
-      "types"
-    ]
+    "src/components/ui/**": ["exports", "types"]
   }
 }

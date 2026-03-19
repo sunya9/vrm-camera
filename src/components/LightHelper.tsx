@@ -11,12 +11,7 @@ export function LightHelper({ position, target = [0, 1.2, 0] }: LightHelperProps
       {/* Sphere at light position */}
       <mesh position={position} renderOrder={999}>
         <sphereGeometry args={[0.15, 16, 16]} />
-        <meshBasicMaterial
-          color={0xffdd44}
-          transparent
-          opacity={0.8}
-          depthTest={false}
-        />
+        <meshBasicMaterial color={0xffdd44} transparent opacity={0.8} depthTest={false} />
       </mesh>
 
       {/* Dashed line from light to target */}

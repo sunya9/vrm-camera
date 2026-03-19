@@ -91,10 +91,7 @@ function applyFaceTracking(vrm: VRM, result: TrackingResult): void {
     const earMidX = (leftEar.x + rightEar.x) / 2;
     const yaw = clamp((nose.x - earMidX) * 3, -0.8, 0.8);
     const pitch = clamp((nose.y - (forehead.y + chin.y) / 2) * 2, -0.5, 0.5);
-    const roll = clamp(
-      -Math.atan2(rightEar.y - leftEar.y, rightEar.x - leftEar.x),
-      -0.4, 0.4,
-    );
+    const roll = clamp(-Math.atan2(rightEar.y - leftEar.y, rightEar.x - leftEar.x), -0.4, 0.4);
 
     prev.headRotX = lerp(prev.headRotX, -pitch, LERP_FACTOR);
     prev.headRotY = lerp(prev.headRotY, yaw, LERP_FACTOR);
@@ -197,7 +194,7 @@ function applyPoseTracking(vrm: VRM, result: TrackingResult): void {
     const spineRoll = clamp(shoulderDy * 0.3, -0.05, 0.05);
 
     // Body turn from depth difference
-    const shoulderDz = (rightShoulder.z - leftShoulder.z);
+    const shoulderDz = rightShoulder.z - leftShoulder.z;
     const spineYaw = clamp(shoulderDz * 0.5, -0.08, 0.08);
 
     prev.spineRotY = lerp(prev.spineRotY, spineYaw, 0.02);
@@ -300,9 +297,7 @@ function applyArm(
     const dot = (dx * lowerDx + dy * lowerDy) / (upperLen * lowerLen + 0.001);
     const bendAngle = Math.acos(clamp(dot, -1, 1));
 
-    const lowerY = isLeft
-      ? clamp(-bendAngle, -2.5, 0)
-      : clamp(bendAngle, 0, 2.5);
+    const lowerY = isLeft ? clamp(-bendAngle, -2.5, 0) : clamp(bendAngle, 0, 2.5);
 
     prevArm[pY] = lerp(prevArm[pY], lowerY, LERP_FACTOR);
   } else if (lowerArm) {
@@ -336,11 +331,11 @@ const FINGER_MAP: Array<{
   indices: [number, number, number, number];
   bones: [string, string, string];
 }> = [
-  { name: "thumb",  indices: [1, 2, 3, 4],     bones: ["Metacarpal", "Proximal", "Distal"] },
-  { name: "index",  indices: [5, 6, 7, 8],     bones: ["Proximal", "Intermediate", "Distal"] },
-  { name: "middle", indices: [9, 10, 11, 12],   bones: ["Proximal", "Intermediate", "Distal"] },
-  { name: "ring",   indices: [13, 14, 15, 16],  bones: ["Proximal", "Intermediate", "Distal"] },
-  { name: "little", indices: [17, 18, 19, 20],  bones: ["Proximal", "Intermediate", "Distal"] },
+  { name: "thumb", indices: [1, 2, 3, 4], bones: ["Metacarpal", "Proximal", "Distal"] },
+  { name: "index", indices: [5, 6, 7, 8], bones: ["Proximal", "Intermediate", "Distal"] },
+  { name: "middle", indices: [9, 10, 11, 12], bones: ["Proximal", "Intermediate", "Distal"] },
+  { name: "ring", indices: [13, 14, 15, 16], bones: ["Proximal", "Intermediate", "Distal"] },
+  { name: "little", indices: [17, 18, 19, 20], bones: ["Proximal", "Intermediate", "Distal"] },
 ];
 
 // Smoothed finger curl values: [left/right][finger][joint]
@@ -419,7 +414,7 @@ function applyHandTracking(vrm: VRM, result: TrackingResult): void {
             const thisTip = landmarks[finger.indices[3]];
             const thisMcp = landmarks[finger.indices[0]];
             const midTip = landmarks[12]; // middle finger tip
-            const midMcp = landmarks[9];  // middle finger MCP
+            const midMcp = landmarks[9]; // middle finger MCP
 
             const ax = thisTip.x - thisMcp.x;
             const ay = thisTip.y - thisMcp.y;
@@ -455,9 +450,7 @@ function applyHandRotation(
   landmarks: Array<{ x: number; y: number; z: number }>,
   isLeft: boolean,
 ): void {
-  const handBone = vrm.humanoid.getNormalizedBoneNode(
-    isLeft ? "leftHand" : "rightHand",
-  );
+  const handBone = vrm.humanoid.getNormalizedBoneNode(isLeft ? "leftHand" : "rightHand");
   if (!handBone) return;
 
   const wrist = landmarks[0];
@@ -483,7 +476,8 @@ function applyHandRotation(
   // MediaPipe Y is down, so -palmDy = upward component
   const wristFlex = clamp(
     Math.atan2(-palmDy, Math.sqrt(palmDx * palmDx + palmDz * palmDz)) * 0.4,
-    -0.6, 0.6,
+    -0.6,
+    0.6,
   );
 
   // Hand X rotation (wrist deviation: radial/ulnar)
@@ -492,10 +486,7 @@ function applyHandRotation(
 
   // Forearm twist (pronation/supination): determined by palm normal Z component
   // When palm faces camera (nz > 0 for left), forearm is supinated
-  const twist = clamp(
-    Math.atan2(nx, nz) * 0.5,
-    -1.0, 1.0,
-  );
+  const twist = clamp(Math.atan2(nx, nz) * 0.5, -1.0, 1.0);
 
   const side = isLeft ? "left" : "right";
   const pFlex = `${side}_hand_flex`;

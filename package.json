@@ -1,7 +1,7 @@
 {
   "name": "vrm-camera",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,9 @@
     "postinstall": "pnpm run setup:models",
     "lint": "eslint .",
     "preview": "vite preview",
-    "knip": "knip"
+    "knip": "knip",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
@@ -50,6 +52,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "knip": "^5.88.1",
+    "oxfmt": "^0.41.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.1",

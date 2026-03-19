@@ -19,30 +19,44 @@ const SLIDERS = [
   { label: "環境光", key: "ambIntensity" as const, min: 0, max: 2, step: 0.05 },
 ] as const;
 
-export function LightingTab({ lighting, showLightHelper, onSetLighting, onSetShowLightHelper }: LightingTabProps) {
+export function LightingTab({
+  lighting,
+  showLightHelper,
+  onSetLighting,
+  onSetShowLightHelper,
+}: LightingTabProps) {
   return (
     <div className="space-y-2">
       <div className="max-w-xs space-y-2">
         {SLIDERS.map((s) => (
           <div key={s.key} className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground w-16 shrink-0">{s.label}</span>
+            <span className="w-16 shrink-0 text-xs text-muted-foreground">{s.label}</span>
             <Slider
-              min={s.min} max={s.max} step={s.step}
+              min={s.min}
+              max={s.max}
+              step={s.step}
               value={[lighting[s.key]]}
-              onValueChange={(v) => onSetLighting({ ...lighting, [s.key]: Array.isArray(v) ? v[0] : v })}
+              onValueChange={(v) =>
+                onSetLighting({ ...lighting, [s.key]: Array.isArray(v) ? v[0] : v })
+              }
               className="flex-1"
             />
-            <span className="text-xs text-muted-foreground w-10 text-right tabular-nums">
+            <span className="w-10 text-right text-xs text-muted-foreground tabular-nums">
               {lighting[s.key].toFixed(s.step < 1 ? 1 : 0)}
             </span>
           </div>
         ))}
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={() => onSetLighting(DEFAULT_LIGHTING)} className="text-xs text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onSetLighting(DEFAULT_LIGHTING)}
+          className="text-xs text-muted-foreground"
+        >
           デフォルトに戻す
         </Button>
-        <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+        <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
           <Switch checked={showLightHelper} onCheckedChange={onSetShowLightHelper} />
           光源表示
         </label>

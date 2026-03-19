@@ -79,9 +79,7 @@ export async function removeUploadedBg(id: string): Promise<void> {
   );
 }
 
-export async function loadUploadedBgUrl(
-  item: UploadedBgItem,
-): Promise<string | null> {
+export async function loadUploadedBgUrl(item: UploadedBgItem): Promise<string | null> {
   const buffer = await get<ArrayBuffer>(`uploaded-bg-${item.id}`, store);
   if (!buffer) return null;
   return URL.createObjectURL(new Blob([buffer], { type: item.mimeType }));

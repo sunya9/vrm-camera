@@ -2,11 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Upload, Play, Square } from "lucide-react";
 import { Field, FieldLabel } from "@/components/ui/field";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ControlsTabProps {
   tracking: boolean;
@@ -35,7 +31,7 @@ export function ControlsTab({
           type="file"
           accept=".vrm"
           onChange={onVRMUpload}
-          className="absolute inset-0 opacity-0 cursor-pointer"
+          className="absolute inset-0 cursor-pointer opacity-0"
         />
       </Button>
 
@@ -53,13 +49,8 @@ export function ControlsTab({
           disabled={tracking}
         />
         <Tooltip>
-          <TooltipTrigger
-            disabled={!tracking}
-            render={<FieldLabel>指</FieldLabel>}
-          />
-          <TooltipContent>
-            指のトラッキングの変更は停止中のみ可能です。
-          </TooltipContent>
+          <TooltipTrigger disabled={!tracking} render={<FieldLabel>指</FieldLabel>} />
+          <TooltipContent>指のトラッキングの変更は停止中のみ可能です。</TooltipContent>
         </Tooltip>
       </Field>
 

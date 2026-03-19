@@ -1,11 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Upload, X } from "lucide-react";
 import {
   getUploadedBgList,
@@ -58,11 +54,7 @@ interface BackgroundTabProps {
   onSetBackground: (change: BgChange) => void;
 }
 
-export function BackgroundTab({
-  bgColor,
-  bgImage,
-  onSetBackground,
-}: BackgroundTabProps) {
+export function BackgroundTab({ bgColor, bgImage, onSetBackground }: BackgroundTabProps) {
   const [uploadedItems, setUploadedItems] = useState<UploadedBgItem[]>([]);
   const [uploadedUrls, setUploadedUrls] = useState<Record<string, string>>({});
 
@@ -112,7 +104,7 @@ export function BackgroundTab({
     <div className="space-y-3">
       {/* Color presets */}
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground shrink-0">単色</span>
+        <span className="shrink-0 text-xs text-muted-foreground">単色</span>
         {BG_COLOR_PRESETS.map((preset) => (
           <Tooltip key={preset.label}>
             <TooltipTrigger
@@ -126,7 +118,7 @@ export function BackgroundTab({
                     )
                   }
                   className={cn(
-                    "w-7 h-7 rounded-md border-2 text-white flex items-center justify-center transition-colors",
+                    "flex h-7 w-7 items-center justify-center rounded-md border-2 text-white transition-colors",
                     bgColor === preset.value && !bgImage
                       ? "border-primary"
                       : "border-white/20 hover:border-white/50",
@@ -137,9 +129,7 @@ export function BackgroundTab({
                       ? undefined
                       : "linear-gradient(45deg, #555 25%, transparent 25%, transparent 75%, #555 75%), linear-gradient(45deg, #555 25%, transparent 25%, transparent 75%, #555 75%)",
                     backgroundSize: preset.value ? undefined : "8px 8px",
-                    backgroundPosition: preset.value
-                      ? undefined
-                      : "0 0, 4px 4px",
+                    backgroundPosition: preset.value ? undefined : "0 0, 4px 4px",
                   }}
                 ></Button>
               }
@@ -150,17 +140,15 @@ export function BackgroundTab({
         <input
           type="color"
           value={bgColor ?? "#000000"}
-          onChange={(e) =>
-            onSetBackground({ type: "color", color: e.target.value })
-          }
-          className="w-7 h-7 rounded-md border-2 border-white/20 cursor-pointer bg-transparent"
+          onChange={(e) => onSetBackground({ type: "color", color: e.target.value })}
+          className="h-7 w-7 cursor-pointer rounded-md border-2 border-white/20 bg-transparent"
         />
       </div>
 
       {/* Image presets + uploaded images */}
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground shrink-0">画像</span>
-        <div className="py-2 flex gap-1.5 overflow-x-auto overflow-y-clip items-center">
+        <span className="shrink-0 text-xs text-muted-foreground">画像</span>
+        <div className="flex items-center gap-1.5 overflow-x-auto overflow-y-clip py-2">
           {/* Presets */}
           {BG_IMAGE_PRESETS.map((preset) => (
             <Tooltip key={preset.id}>
@@ -175,7 +163,7 @@ export function BackgroundTab({
                       })
                     }
                     className={cn(
-                      "shrink-0 w-16 h-10 rounded-md border-2 overflow-hidden transition-colors",
+                      "h-10 w-16 shrink-0 overflow-hidden rounded-md border-2 transition-colors",
                       bgImage?.includes(preset.id)
                         ? "border-primary"
                         : "border-white/20 hover:border-white/50",
@@ -184,7 +172,7 @@ export function BackgroundTab({
                     <img
                       src={unsplashUrl(preset.id, 128, 80)}
                       alt={preset.label}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                       loading="lazy"
                     />
                   </button>
@@ -196,7 +184,7 @@ export function BackgroundTab({
 
           {/* Uploaded images */}
           {uploadedItems.map((item) => (
-            <div key={item.id} className="relative group shrink-0">
+            <div key={item.id} className="group relative shrink-0">
               <Tooltip>
                 <TooltipTrigger
                   render={
@@ -207,9 +195,8 @@ export function BackgroundTab({
                         if (url) onSetBackground({ type: "image", url });
                       }}
                       className={cn(
-                        "w-16 h-10 rounded-md border-2 overflow-hidden transition-colors",
-                        uploadedUrls[item.id] &&
-                          bgImage === uploadedUrls[item.id]
+                        "h-10 w-16 overflow-hidden rounded-md border-2 transition-colors",
+                        uploadedUrls[item.id] && bgImage === uploadedUrls[item.id]
                           ? "border-primary"
                           : "border-white/20 hover:border-white/50",
                       )}
@@ -218,7 +205,7 @@ export function BackgroundTab({
                         <img
                           src={uploadedUrls[item.id]}
                           alt={item.fileName}
-                          className="w-full h-full object-cover"
+                          className="h-full w-full object-cover"
                         />
                       )}
                     </button>
@@ -230,7 +217,7 @@ export function BackgroundTab({
               <button
                 type="button"
                 onClick={() => handleRemove(item.id)}
-                className="absolute -top-1.5 -right-1.5 size-4 rounded-full bg-destructive text-background flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-background opacity-0 transition-opacity group-hover:opacity-100"
               >
                 <X className="size-3" />
               </button>
@@ -238,17 +225,13 @@ export function BackgroundTab({
           ))}
 
           {/* Upload button */}
-          <Button
-            variant="secondary"
-            size="sm"
-            className="relative cursor-pointer shrink-0"
-          >
+          <Button variant="secondary" size="sm" className="relative shrink-0 cursor-pointer">
             <Upload /> 追加
             <input
               type="file"
               accept="image/*"
               onChange={handleUpload}
-              className="absolute inset-0 opacity-0 cursor-pointer"
+              className="absolute inset-0 cursor-pointer opacity-0"
             />
           </Button>
         </div>

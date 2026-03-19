@@ -31,11 +31,11 @@ export function ExpressionTab({ activeExpression, onTriggerExpression }: Express
             onClick={() => onTriggerExpression(expr.name)}
             className="text-xs"
           >
-            <span className="text-base mr-0.5">{expr.emoji}</span> {expr.label}
+            <span className="mr-0.5 text-base">{expr.emoji}</span> {expr.label}
           </Button>
         ))}
       </div>
-      <p className="text-xs text-muted-foreground mt-2">
+      <p className="mt-2 text-xs text-muted-foreground">
         クリックで2秒間表情を表示（トラッキング中も有効）
       </p>
     </div>

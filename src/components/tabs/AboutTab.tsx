@@ -1,4 +1,4 @@
-import { ExternalLink, Github } from "lucide-react";
+import { Github } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { isTauri } from "@/lib/platform";
 
@@ -16,9 +16,8 @@ export function AboutTab() {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground leading-relaxed">
-        VRMモデルをWebカメラでリアルタイムに動かすバーチャルカメラアプリ。
-        MediaPipe による顔・体・手のトラッキングに対応。
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        VRMモデルをWebカメラでリアルタイムに動かすバーチャルカメラアプリです。
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -31,7 +30,7 @@ export function AboutTab() {
         </a>
       </div>
 
-      <div className="text-xs text-muted-foreground/50 flex items-baseline gap-2">
+      <div className="flex items-baseline gap-2 text-xs text-muted-foreground/50">
         <p>
           Created by{" "}
           <a

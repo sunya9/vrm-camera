@@ -1,13 +1,13 @@
 export interface EffectSettings {
   bloom: boolean;
-  bloomIntensity: number;     // 0-3
-  bloomThreshold: number;     // 0-1
+  bloomIntensity: number; // 0-3
+  bloomThreshold: number; // 0-1
   vignette: boolean;
-  vignetteIntensity: number;  // 0-1
+  vignetteIntensity: number; // 0-1
   fog: boolean;
   fogColor: string;
-  fogNear: number;            // 0-10
-  fogFar: number;             // 0-20
+  fogNear: number; // 0-10
+  fogFar: number; // 0-20
   contactShadows: boolean;
 }
 

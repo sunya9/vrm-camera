@@ -1,11 +1,4 @@
-import {
-  useMemo,
-  Suspense,
-  useRef,
-  useEffect,
-  useCallback,
-  useState,
-} from "react";
+import { useMemo, Suspense, useRef, useEffect, useCallback, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, ContactShadows } from "@react-three/drei";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
@@ -123,21 +116,14 @@ export function VRMCanvas({
   }, [lighting.dirAngleH, lighting.dirAngleV, lighting.dirDistance]);
 
   return (
-    <div
-      className="w-full h-full"
-      style={{ transform: mirror ? "scaleX(-1)" : undefined }}
-    >
+    <div className="h-full w-full" style={{ transform: mirror ? "scaleX(-1)" : undefined }}>
       <Canvas
         camera={{ position: [0, 1.4, 1.5], fov: 30, near: 0.1, far: 20 }}
         gl={{ alpha: true, antialias: true }}
         shadows={effects.contactShadows}
       >
         {bgImage ? (
-          <Suspense
-            fallback={
-              bgColor ? <color attach="background" args={[bgColor]} /> : null
-            }
-          >
+          <Suspense fallback={bgColor ? <color attach="background" args={[bgColor]} /> : null}>
             <BackgroundImage url={bgImage} />
           </Suspense>
         ) : bgColor ? (
@@ -145,10 +131,7 @@ export function VRMCanvas({
         ) : null}
 
         {effects.fog && (
-          <fog
-            attach="fog"
-            args={[effects.fogColor, effects.fogNear, effects.fogFar]}
-          />
+          <fog attach="fog" args={[effects.fogColor, effects.fogNear, effects.fogFar]} />
         )}
 
         <ambientLight intensity={lighting.ambIntensity} />
@@ -169,13 +152,7 @@ export function VRMCanvas({
         {showHelper && <LightHelper position={lightPosition} />}
 
         {effects.contactShadows && (
-          <ContactShadows
-            position={[0, 0, 0]}
-            opacity={0.5}
-            scale={3}
-            blur={2}
-            far={2}
-          />
+          <ContactShadows position={[0, 0, 0]} opacity={0.5} scale={3} blur={2} far={2} />
         )}
 
         {vrmUrl && (

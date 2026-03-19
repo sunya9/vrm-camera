@@ -16,9 +16,7 @@ export function LogTab({ logs }: LogTabProps) {
   return (
     <ScrollArea className="h-full">
       <div className="space-y-0.5 font-mono text-xs">
-        {logs.length === 0 && (
-          <div className="text-muted-foreground">ログはまだありません</div>
-        )}
+        {logs.length === 0 && <div className="text-muted-foreground">ログはまだありません</div>}
         {logs.map((entry) => (
           <div key={entry.id} className="flex gap-2">
             <span className=" shrink-0">{entry.time}</span>
