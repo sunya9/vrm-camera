@@ -13,7 +13,7 @@ import { DEFAULT_CAMERA, type CameraState } from "@/lib/camera";
 import { ControlTabs } from "./ControlTabs";
 import { Spinner } from "@/components/ui/spinner";
 import type { VRM } from "@pixiv/three-vrm";
-import { isTauri } from "@/lib/platform";
+import { isTauri, CONTROLS_URL } from "@/lib/platform";
 import type { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 export function VRMViewer() {
@@ -348,7 +348,7 @@ export function VRMViewer() {
       try {
         const { WebviewWindow } = await import("@tauri-apps/api/webviewWindow");
         const controlWin = new WebviewWindow("controls", {
-          url: "/#/controls",
+          url: CONTROLS_URL,
           title: "VRM Camera Controls",
           width: 720,
           height: 350,
@@ -370,7 +370,7 @@ export function VRMViewer() {
       }
     } else {
       const win = window.open(
-        "/#/controls",
+        CONTROLS_URL,
         "vrm-camera-controls",
         "width=720,height=350,resizable=yes",
       );
