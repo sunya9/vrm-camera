@@ -12,7 +12,10 @@ export function AboutTab() {
         <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="VRM Camera" className="size-10" />
         <div>
           <h2 className="font-semibold text-foreground">VRM Camera</h2>
-          <p className="text-xs text-muted-foreground">v{VERSION}{isTauri ? " (Desktop)" : " (Web)"}</p>
+          <p className="text-xs text-muted-foreground">
+            v{VERSION}
+            {isTauri ? " (Desktop)" : " (Web)"}
+          </p>
         </div>
       </div>
 
