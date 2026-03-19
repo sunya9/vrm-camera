@@ -115,34 +115,35 @@ export function BackgroundTab({
         <span className="text-xs text-muted-foreground shrink-0">単色</span>
         {BG_COLOR_PRESETS.map((preset) => (
           <Tooltip key={preset.label}>
-            <TooltipTrigger>
-              <button
-                type="button"
-                onClick={() =>
-                  onSetBackground(
-                    preset.value !== null
-                      ? { type: "color", color: preset.value }
-                      : { type: "clear" },
-                  )
-                }
-                className={cn(
-                  "w-7 h-7 rounded-md border-2 text-[10px] flex items-center justify-center transition-colors",
-                  bgColor === preset.value && !bgImage
-                    ? "border-primary"
-                    : "border-white/20 hover:border-white/50",
-                )}
-                style={{
-                  backgroundColor: preset.value ?? "transparent",
-                  backgroundImage: preset.value
-                    ? undefined
-                    : "linear-gradient(45deg, #555 25%, transparent 25%, transparent 75%, #555 75%), linear-gradient(45deg, #555 25%, transparent 25%, transparent 75%, #555 75%)",
-                  backgroundSize: preset.value ? undefined : "8px 8px",
-                  backgroundPosition: preset.value ? undefined : "0 0, 4px 4px",
-                }}
-              >
-                {!preset.value && <span className="text-white">✕</span>}
-              </button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  onClick={() =>
+                    onSetBackground(
+                      preset.value !== null
+                        ? { type: "color", color: preset.value }
+                        : { type: "clear" },
+                    )
+                  }
+                  className={cn(
+                    "w-7 h-7 rounded-md border-2 text-white flex items-center justify-center transition-colors",
+                    bgColor === preset.value && !bgImage
+                      ? "border-primary"
+                      : "border-white/20 hover:border-white/50",
+                  )}
+                  style={{
+                    backgroundColor: preset.value ?? "transparent",
+                    backgroundImage: preset.value
+                      ? undefined
+                      : "linear-gradient(45deg, #555 25%, transparent 25%, transparent 75%, #555 75%), linear-gradient(45deg, #555 25%, transparent 25%, transparent 75%, #555 75%)",
+                    backgroundSize: preset.value ? undefined : "8px 8px",
+                    backgroundPosition: preset.value
+                      ? undefined
+                      : "0 0, 4px 4px",
+                  }}
+                ></Button>
+              }
+            />
             <TooltipContent>{preset.label}</TooltipContent>
           </Tooltip>
         ))}
@@ -163,30 +164,32 @@ export function BackgroundTab({
           {/* Presets */}
           {BG_IMAGE_PRESETS.map((preset) => (
             <Tooltip key={preset.id}>
-              <TooltipTrigger>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onSetBackground({
-                      type: "image",
-                      url: unsplashUrl(preset.id),
-                    })
-                  }
-                  className={cn(
-                    "shrink-0 w-16 h-10 rounded-md border-2 overflow-hidden transition-colors",
-                    bgImage?.includes(preset.id)
-                      ? "border-primary"
-                      : "border-white/20 hover:border-white/50",
-                  )}
-                >
-                  <img
-                    src={unsplashUrl(preset.id, 128, 80)}
-                    alt={preset.label}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </button>
-              </TooltipTrigger>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onSetBackground({
+                        type: "image",
+                        url: unsplashUrl(preset.id),
+                      })
+                    }
+                    className={cn(
+                      "shrink-0 w-16 h-10 rounded-md border-2 overflow-hidden transition-colors",
+                      bgImage?.includes(preset.id)
+                        ? "border-primary"
+                        : "border-white/20 hover:border-white/50",
+                    )}
+                  >
+                    <img
+                      src={unsplashUrl(preset.id, 128, 80)}
+                      alt={preset.label}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </button>
+                }
+              />
               <TooltipContent>{preset.label}</TooltipContent>
             </Tooltip>
           ))}
@@ -195,29 +198,33 @@ export function BackgroundTab({
           {uploadedItems.map((item) => (
             <div key={item.id} className="relative group shrink-0">
               <Tooltip>
-                <TooltipTrigger>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const url = uploadedUrls[item.id];
-                      if (url) onSetBackground({ type: "image", url });
-                    }}
-                    className={cn(
-                      "w-16 h-10 rounded-md border-2 overflow-hidden transition-colors",
-                      uploadedUrls[item.id] && bgImage === uploadedUrls[item.id]
-                        ? "border-primary"
-                        : "border-white/20 hover:border-white/50",
-                    )}
-                  >
-                    {uploadedUrls[item.id] && (
-                      <img
-                        src={uploadedUrls[item.id]}
-                        alt={item.fileName}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-                  </button>
-                </TooltipTrigger>
+                <TooltipTrigger
+                  render={
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = uploadedUrls[item.id];
+                        if (url) onSetBackground({ type: "image", url });
+                      }}
+                      className={cn(
+                        "w-16 h-10 rounded-md border-2 overflow-hidden transition-colors",
+                        uploadedUrls[item.id] &&
+                          bgImage === uploadedUrls[item.id]
+                          ? "border-primary"
+                          : "border-white/20 hover:border-white/50",
+                      )}
+                    >
+                      {uploadedUrls[item.id] && (
+                        <img
+                          src={uploadedUrls[item.id]}
+                          alt={item.fileName}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </button>
+                  }
+                />
+
                 <TooltipContent>{item.fileName}</TooltipContent>
               </Tooltip>
               <button
