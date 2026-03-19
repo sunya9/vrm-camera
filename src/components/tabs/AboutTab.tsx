@@ -22,22 +22,26 @@ export function AboutTab() {
       </p>
 
       <div className="flex flex-wrap gap-2">
-        <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>
-          <Github className="size-4" /> GitHub
-          <ExternalLink className="size-3 ml-0.5 opacity-50" />
-        </a>
-        <a href={`${REPO_URL}/releases`} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>
-          Releases
-          <ExternalLink className="size-3 ml-0.5 opacity-50" />
-        </a>
-        <a href={`${REPO_URL}/issues`} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>
-          Issues
-          <ExternalLink className="size-3 ml-0.5 opacity-50" />
+        <a
+          href={REPO_URL}
+          target="_blank"
+          className={buttonVariants({ variant: "link", size: "sm" })}
+        >
+          <Github /> GitHub
         </a>
       </div>
 
-      <div className="text-[10px] text-muted-foreground/50 space-y-0.5">
-        <p>Built with React, Three.js, @pixiv/three-vrm, MediaPipe</p>
+      <div className="text-xs text-muted-foreground/50 flex items-baseline gap-2">
+        <p>
+          Created by{" "}
+          <a
+            target="_blank"
+            href="https://x.com/ephemeralMocha"
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            @ephemeralMocha
+          </a>
+        </p>
         <p>MIT License</p>
       </div>
     </div>
