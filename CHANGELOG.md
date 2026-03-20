@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/sunya9/vrm-camera/compare/v1.0.0...v1.0.1) (2026-03-19)
+
+
+### Bug Fixes
+
+* remove component prefix from release-please tags ([6002a41](https://github.com/sunya9/vrm-camera/commit/6002a41fb89d5efd8bad8a6ce97e5ce87dbd136f))
+* use BASE_URL for controls window to support GitHub Pages ([3b1de18](https://github.com/sunya9/vrm-camera/commit/3b1de180ba724e58de260ed2522f786f35ff5bb6))
+
 ## 1.0.0 (2026-03-19)
 
 
