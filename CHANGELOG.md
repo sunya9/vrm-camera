@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/sunya9/vrm-camera/compare/v1.0.0...v1.0.1) (2026-03-20)
+
+
+### Bug Fixes
+
+* reset version to 1.0.0 ([0b66b2b](https://github.com/sunya9/vrm-camera/commit/0b66b2bda7c8a2ce7bd74d4b7ec14f437350bdf2))
+* use generic updater for Cargo.toml in release-please ([4c6dfc0](https://github.com/sunya9/vrm-camera/commit/4c6dfc0040502920ab1c42e7c60be53ec97cdeef))
+
 ## 1.0.0 (2026-03-19)
 
 
