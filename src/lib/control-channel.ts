@@ -18,6 +18,10 @@ export type ControlCommand =
     }
   | { command: "setLighting"; value: LightingSettings }
   | { command: "setShowLightHelper"; value: boolean }
+  | { command: "setShowColliderHelper"; value: boolean }
+  | { command: "setShowBoneHelper"; value: boolean }
+  | { command: "setHeadColliderScale"; value: number }
+  | { command: "setHairStiffnessScale"; value: number }
   | { command: "setEffects"; value: EffectSettings }
   | { command: "setRemoteLightTab"; value: boolean }
   | { command: "triggerExpression"; value: string }
@@ -39,6 +43,10 @@ export interface ControlState {
   lighting: LightingSettings;
   effects: EffectSettings;
   showLightHelper: boolean;
+  showColliderHelper: boolean;
+  showBoneHelper: boolean;
+  headColliderScale: number;
+  hairStiffnessScale: number;
   activeExpression: string | null;
   status: string;
   vrmName: string | null;

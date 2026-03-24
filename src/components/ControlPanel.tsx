@@ -20,6 +20,10 @@ const INITIAL_STATE: ControlState = {
   lighting: DEFAULT_LIGHTING,
   effects: DEFAULT_EFFECTS,
   showLightHelper: true,
+  showColliderHelper: false,
+  showBoneHelper: false,
+  headColliderScale: 1.5,
+  hairStiffnessScale: 1.0,
   activeExpression: null,
   status: "接続待ち...",
   vrmName: null,
@@ -71,10 +75,19 @@ export function ControlPanel() {
         onSetBackground={(change) => sendCommand({ command: "setBackground", value: change })}
         onSetLighting={(v) => sendCommand({ command: "setLighting", value: v })}
         onSetShowLightHelper={(v) => sendCommand({ command: "setShowLightHelper", value: v })}
+        showColliderHelper={state.showColliderHelper}
+        headColliderScale={state.headColliderScale}
+        onSetShowColliderHelper={(v) => sendCommand({ command: "setShowColliderHelper", value: v })}
+        showBoneHelper={state.showBoneHelper}
+        onSetShowBoneHelper={(v) => sendCommand({ command: "setShowBoneHelper", value: v })}
+        onSetHeadColliderScale={(v) => sendCommand({ command: "setHeadColliderScale", value: v })}
+        hairStiffnessScale={state.hairStiffnessScale}
+        onSetHairStiffnessScale={(v) => sendCommand({ command: "setHairStiffnessScale", value: v })}
         onSetEffects={(v) => sendCommand({ command: "setEffects", value: v })}
         onTriggerExpression={(name) => sendCommand({ command: "triggerExpression", value: name })}
         onResetPose={() => sendCommand({ command: "resetPose" })}
         onResetCamera={() => sendCommand({ command: "resetCamera" })}
+        showControls={true}
         isDetached
         onOpenControlPanel={async () => {
           if (isTauri) {
