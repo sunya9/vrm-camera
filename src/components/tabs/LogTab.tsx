@@ -4,18 +4,20 @@ import type { LogEntry } from "@/lib/log-store";
 
 interface LogTabProps {
   logs: LogEntry[];
+  showControls: boolean;
 }
 
-export function LogTab({ logs }: LogTabProps) {
+export function LogTab({ logs, showControls }: LogTabProps) {
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!showControls) return;
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [logs]);
+  }, [logs, showControls]);
 
   return (
     <ScrollArea className="h-full">
-      <div className="space-y-0.5 font-mono text-xs">
+      <div className="space-y-0.5 font-mono text-xs select-text">
         {logs.length === 0 && <div className="text-muted-foreground">ログはまだありません</div>}
         {logs.map((entry) => (
           <div key={entry.id} className="flex gap-2">

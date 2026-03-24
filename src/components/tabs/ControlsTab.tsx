@@ -8,20 +8,36 @@ interface ControlsTabProps {
   tracking: boolean;
   handTracking: boolean;
   mirror: boolean;
+  showColliderHelper: boolean;
+  headColliderScale: number;
   onVRMUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onToggleTracking: () => void;
   onSetMirror: (v: boolean) => void;
   onSetHandTracking: (v: boolean) => void;
+  onSetShowColliderHelper: (v: boolean) => void;
+  showBoneHelper: boolean;
+  onSetShowBoneHelper: (v: boolean) => void;
+  onSetHeadColliderScale: (v: number) => void;
+  hairStiffnessScale: number;
+  onSetHairStiffnessScale: (v: number) => void;
 }
 
 export function ControlsTab({
   tracking,
   handTracking,
   mirror,
+  showColliderHelper,
+  headColliderScale,
   onVRMUpload,
   onToggleTracking,
   onSetMirror,
   onSetHandTracking,
+  onSetShowColliderHelper,
+  showBoneHelper,
+  onSetShowBoneHelper,
+  onSetHeadColliderScale,
+  hairStiffnessScale,
+  onSetHairStiffnessScale,
 }: ControlsTabProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -70,6 +86,47 @@ export function ControlsTab({
           </>
         )}
       </Button>
+
+      <div className="h-4 w-px bg-border" />
+
+      <Field orientation="horizontal" className="w-fit">
+        <Switch checked={showColliderHelper} onCheckedChange={onSetShowColliderHelper} />
+        <FieldLabel>コライダー</FieldLabel>
+      </Field>
+
+      <Field orientation="horizontal" className="w-fit">
+        <Switch checked={showBoneHelper} onCheckedChange={onSetShowBoneHelper} />
+        <FieldLabel>ボーン</FieldLabel>
+      </Field>
+
+      <Field orientation="horizontal" className="w-fit gap-2">
+        <FieldLabel className="text-xs text-muted-foreground">
+          頭 ×{headColliderScale.toFixed(1)}
+        </FieldLabel>
+        <input
+          type="range"
+          min="1.0"
+          max="3.0"
+          step="0.1"
+          value={headColliderScale}
+          onChange={(e) => onSetHeadColliderScale(Number(e.target.value))}
+          className="h-1 w-20 accent-primary"
+        />
+      </Field>
+      <Field orientation="horizontal" className="w-fit gap-2">
+        <FieldLabel className="text-xs text-muted-foreground">
+          硬さ ×{hairStiffnessScale.toFixed(1)}
+        </FieldLabel>
+        <input
+          type="range"
+          min="0.5"
+          max="5.0"
+          step="0.1"
+          value={hairStiffnessScale}
+          onChange={(e) => onSetHairStiffnessScale(Number(e.target.value))}
+          className="h-1 w-20 accent-primary"
+        />
+      </Field>
     </div>
   );
 }
