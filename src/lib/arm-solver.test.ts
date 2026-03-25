@@ -51,25 +51,11 @@ describe("solveArm", () => {
   });
 
   describe("upper arm forward/backward (X axis)", () => {
-    it("arm at side (no depth): X is ~0", () => {
-      const elbow = { x: 0.3, y: 0.6, z: 0 };
-      const wrist = { x: 0.3, y: 0.8, z: 0 };
-      const result = solveArm(shoulder, elbow, wrist, true);
-      expect(Math.abs(result.upperArmX)).toBeLessThan(0.1);
-    });
-
-    it("arm reaching forward (negative Z): X is positive", () => {
-      const elbow = { x: 0.3, y: 0.5, z: -0.2 }; // closer to camera
+    it("X is always 0 (depth disabled)", () => {
+      const elbow = { x: 0.3, y: 0.5, z: -0.2 };
       const wrist = { x: 0.3, y: 0.6, z: -0.3 };
       const result = solveArm(shoulder, elbow, wrist, true);
-      expect(result.upperArmX).toBeGreaterThan(0.3);
-    });
-
-    it("arm reaching backward (positive Z): X is negative", () => {
-      const elbow = { x: 0.3, y: 0.5, z: 0.2 }; // away from camera
-      const wrist = { x: 0.3, y: 0.6, z: 0.3 };
-      const result = solveArm(shoulder, elbow, wrist, true);
-      expect(result.upperArmX).toBeLessThan(-0.3);
+      expect(result.upperArmX).toBe(0);
     });
   });
 

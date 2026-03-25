@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type { VRM } from "@pixiv/three-vrm";
 import {
@@ -9,6 +9,7 @@ import {
   VRMSpringBoneColliderShapeSphere,
   VRMSpringBoneColliderHelper,
   VRMSpringBoneJointHelper,
+  VRMHumanoidHelper,
 } from "@pixiv/three-vrm";
 import * as THREE from "three";
 import { applyTracking } from "@/lib/vrm-animator";
@@ -62,7 +63,7 @@ export function VRMModel({
   const groupRef = useRef<THREE.Group>(null);
   const prevGesturesRef = useRef<string>("");
   const helpersRef = useRef<THREE.Object3D[]>([]);
-  const skeletonHelperRef = useRef<THREE.SkeletonHelper | null>(null);
+  const boneHelperRef = useRef<THREE.Group | null>(null);
   const originalStiffnessRef = useRef<Map<object, number>>(new Map());
 
   // Load VRM
@@ -77,6 +78,13 @@ export function VRMModel({
       const newVrm = gltf.userData.vrm as VRM;
       VRMUtils.removeUnnecessaryVertices(gltf.scene);
       VRMUtils.combineSkeletons(gltf.scene);
+      // VRM 0.x faces -Z, VRM 1.0 faces +Z. Both need to face -Z in Three.js (toward camera).
+      // rotateVRM0 handles 0.x; for 1.0 we rotate manually.
+      if (newVrm.meta.metaVersion === "0") {
+        VRMUtils.rotateVRM0(newVrm);
+      } else {
+        newVrm.scene.rotation.y = Math.PI;
+      }
 
       newVrm.scene.traverse((obj) => {
         obj.frustumCulled = false;
@@ -107,8 +115,9 @@ export function VRMModel({
       }
 
       setVrm((prev) => {
-        if (prev && groupRef.current) {
-          groupRef.current.remove(prev.scene);
+        if (prev) {
+          if (groupRef.current) groupRef.current.remove(prev.scene);
+          VRMUtils.deepDispose(prev.scene);
         }
         return newVrm;
       });
@@ -186,35 +195,32 @@ export function VRMModel({
     };
   }, [vrm, showColliderHelper]);
 
-  // Skeleton helper (bone visualization)
-  // Added to scene root (not the rotated group) because SkeletonHelper
-  // reads bone.matrixWorld (already includes group rotation). Placing it
-  // inside the rotated group would cause double rotation.
-  const { scene } = useThree();
+  // Bone helper (VRMHumanoidHelper visualization)
   useEffect(() => {
-    if (!vrm) return;
+    const group = groupRef.current;
+    if (!vrm || !group) return;
 
-    if (skeletonHelperRef.current) {
-      scene.remove(skeletonHelperRef.current);
-      skeletonHelperRef.current.dispose();
-      skeletonHelperRef.current = null;
+    if (boneHelperRef.current) {
+      group.remove(boneHelperRef.current);
+      boneHelperRef.current = null;
     }
 
     if (!showBoneHelper) return;
 
-    const helper = new THREE.SkeletonHelper(vrm.scene);
-    helper.visible = true;
-    scene.add(helper);
-    skeletonHelperRef.current = helper;
+    const helper = new VRMHumanoidHelper(vrm.humanoid);
+    group.add(helper);
+    boneHelperRef.current = helper;
 
     return () => {
-      if (skeletonHelperRef.current) {
-        scene.remove(skeletonHelperRef.current);
-        skeletonHelperRef.current.dispose();
-        skeletonHelperRef.current = null;
+      if (boneHelperRef.current) {
+        group.remove(boneHelperRef.current);
+        if ("dispose" in boneHelperRef.current) {
+          (boneHelperRef.current as { dispose: () => void }).dispose();
+        }
+        boneHelperRef.current = null;
       }
     };
-  }, [vrm, showBoneHelper, scene]);
+  }, [vrm, showBoneHelper]);
 
   // Animation loop
   useFrame((_, delta) => {
@@ -263,5 +269,5 @@ export function VRMModel({
     vrm.update(delta);
   });
 
-  return <group ref={groupRef} rotation-y={Math.PI} />;
+  return <group ref={groupRef} />;
 }

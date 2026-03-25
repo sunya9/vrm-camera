@@ -274,7 +274,7 @@ export function VRMViewer() {
           triggerExpression(msg.value);
           break;
         case "resetPose":
-          resetAnimatorState();
+          resetAnimatorState(vrmRef.current ?? undefined);
           addLog("ポーズをリセット");
           break;
         case "resetCamera":
@@ -466,7 +466,7 @@ export function VRMViewer() {
   }, []);
 
   const handleResetPose = useCallback(() => {
-    resetAnimatorState();
+    resetAnimatorState(vrmRef.current ?? undefined);
     addLog("ポーズをリセット");
   }, [addLog]);
 

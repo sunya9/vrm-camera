@@ -18,7 +18,7 @@ importers:
         specifier: ^0.10.34
         version: 0.10.34
       '@pixiv/three-vrm':
-        specifier: ^3.4.0
+        specifier: ^3.5.1
         version: 3.5.1(three@0.183.2)
       '@react-three/drei':
         specifier: ^10.7.7
