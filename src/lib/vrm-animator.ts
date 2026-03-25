@@ -35,7 +35,12 @@ const prev = {
   rightUpperArmZ: -0.3,
 };
 
-export function resetAnimatorState(): void {
+export function resetAnimatorState(vrm?: VRM): void {
+  // Reset VRM bones to T-pose and clear expressions
+  if (vrm) {
+    vrm.humanoid.resetNormalizedPose();
+    vrm.expressionManager?.resetValues();
+  }
   prev.headRotX = 0;
   prev.headRotY = 0;
   prev.headRotZ = 0;
@@ -159,31 +164,27 @@ function applyBlendshapes(vrm: VRM, categories: BlendshapeCategory[]): void {
     expressionManager.setValue("angry", 0);
   }
 
-  // Eye look direction — computed independently for each eye.
-  // MediaPipe "Out" = toward the ear, "In" = toward the nose.
+  // Eye look direction via VRMLookAt API.
+  // Average left/right blendshapes to get overall gaze direction,
+  // then convert to yaw/pitch in degrees.
   const lookOutLeft = map.get("eyeLookOutLeft") ?? 0;
   const lookInLeft = map.get("eyeLookInLeft") ?? 0;
   const lookUpLeft = map.get("eyeLookUpLeft") ?? 0;
   const lookDownLeft = map.get("eyeLookDownLeft") ?? 0;
-
   const lookOutRight = map.get("eyeLookOutRight") ?? 0;
   const lookInRight = map.get("eyeLookInRight") ?? 0;
   const lookUpRight = map.get("eyeLookUpRight") ?? 0;
   const lookDownRight = map.get("eyeLookDownRight") ?? 0;
 
-  const leftEyeX = clamp((lookOutLeft - lookInLeft) * 0.3, -0.15, 0.15);
-  const leftEyeY = clamp((lookUpLeft - lookDownLeft) * 0.2, -0.1, 0.1);
+  // Horizontal: Out = toward ear. Average both eyes for combined gaze.
+  const gazeX = (lookOutLeft - lookInLeft + (lookInRight - lookOutRight)) / 2;
+  const gazeY = (lookUpLeft - lookDownLeft + (lookUpRight - lookDownRight)) / 2;
 
-  const rightEyeX = clamp((lookInRight - lookOutRight) * 0.3, -0.15, 0.15);
-  const rightEyeY = clamp((lookUpRight - lookDownRight) * 0.2, -0.1, 0.1);
-
-  const leftEye = vrm.humanoid.getNormalizedBoneNode("leftEye");
-  const rightEye = vrm.humanoid.getNormalizedBoneNode("rightEye");
-  if (leftEye) {
-    leftEye.rotation.set(leftEyeY, leftEyeX, 0);
-  }
-  if (rightEye) {
-    rightEye.rotation.set(rightEyeY, rightEyeX, 0);
+  const lookAt = vrm.lookAt;
+  if (lookAt) {
+    lookAt.autoUpdate = false;
+    lookAt.yaw = clamp(gazeX * 20, -10, 10);
+    lookAt.pitch = clamp(gazeY * 20, -10, 10);
   }
 }
 
