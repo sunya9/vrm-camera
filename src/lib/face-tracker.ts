@@ -34,7 +34,9 @@ interface TrackerOptions {
   enableHands?: boolean;
 }
 
-export async function createFaceTracker(options: TrackerOptions = {}): Promise<FaceTracker> {
+export async function createFaceTracker(
+  options: TrackerOptions = {},
+): Promise<FaceTracker> {
   const base = import.meta.env.BASE_URL;
   const vision = await FilesetResolver.forVisionTasks(`${base}mediapipe/wasm`);
 
@@ -71,11 +73,9 @@ export async function createFaceTracker(options: TrackerOptions = {}): Promise<F
       })
     : null;
 
-  const [faceLandmarker, poseLandmarker, gestureRecognizer] = await Promise.all([
-    faceLandmarkerPromise,
-    poseLandmarkerPromise,
-    gestureRecognizerPromise,
-  ]);
+  const [faceLandmarker, poseLandmarker, gestureRecognizer] = await Promise.all(
+    [faceLandmarkerPromise, poseLandmarkerPromise, gestureRecognizerPromise],
+  );
 
   let lastTimestamp = -1;
 
@@ -130,12 +130,44 @@ export async function createFaceTracker(options: TrackerOptions = {}): Promise<F
   };
 }
 
-export async function setupWebcam(videoElement: HTMLVideoElement): Promise<MediaStream> {
+export async function setupWebcam(
+  videoElement: HTMLVideoElement,
+  deviceId?: string,
+): Promise<MediaStream> {
+  const video: MediaTrackConstraints = deviceId
+    ? { width: 640, height: 480, deviceId: { exact: deviceId } }
+    : { width: 640, height: 480, facingMode: "user" };
   const stream = await navigator.mediaDevices.getUserMedia({
-    video: { width: 640, height: 480, facingMode: "user" },
+    video,
     audio: false,
   });
   videoElement.srcObject = stream;
   await videoElement.play();
   return stream;
+}
+
+export interface CameraDevice {
+  deviceId: string;
+  label: string;
+}
+
+export async function listCameraDevices(): Promise<CameraDevice[]> {
+  // Request permission first (needed to get labels)
+  try {
+    const tempStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+    });
+    for (const track of tempStream.getTracks()) track.stop();
+  } catch {
+    return [];
+  }
+
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  console.log({ devices });
+  return devices
+    .filter((d) => d.kind === "videoinput")
+    .map((d, i) => ({
+      deviceId: d.deviceId,
+      label: d.label || `カメラ ${i + 1}`,
+    }));
 }

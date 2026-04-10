@@ -72,6 +72,9 @@ export function ControlPanel() {
         onToggleTracking={() => sendCommand({ command: "toggleTracking" })}
         onSetMirror={(v) => sendCommand({ command: "setMirror", value: v })}
         onSetHandTracking={(v) => sendCommand({ command: "setHandTracking", value: v })}
+        cameraDevices={[]}
+        selectedCamera={null}
+        onSetSelectedCamera={() => {}}
         onSetBackground={(change) => sendCommand({ command: "setBackground", value: change })}
         onSetLighting={(v) => sendCommand({ command: "setLighting", value: v })}
         onSetShowLightHelper={(v) => sendCommand({ command: "setShowLightHelper", value: v })}

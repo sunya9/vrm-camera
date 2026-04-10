@@ -1,6 +1,7 @@
 import type { LightingSettings } from "@/lib/vrm-scene";
 import type { EffectSettings } from "@/lib/effects";
 import type { LogEntry } from "@/lib/log-store";
+import type { CameraDevice } from "@/lib/face-tracker";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -38,6 +39,9 @@ interface ControlTabsProps extends TabsPrimitive.Root.Props {
   onToggleTracking: () => void;
   onSetMirror: (v: boolean) => void;
   onSetHandTracking: (v: boolean) => void;
+  cameraDevices: CameraDevice[];
+  selectedCamera: string | null;
+  onSetSelectedCamera: (deviceId: string | null) => void;
   onSetShowColliderHelper: (v: boolean) => void;
   onSetShowBoneHelper: (v: boolean) => void;
   onSetHeadColliderScale: (v: number) => void;
@@ -73,6 +77,9 @@ export function ControlTabs({
   onToggleTracking,
   onSetMirror,
   onSetHandTracking,
+  cameraDevices,
+  selectedCamera,
+  onSetSelectedCamera,
   showColliderHelper,
   headColliderScale,
   onSetShowColliderHelper,
@@ -164,6 +171,9 @@ export function ControlTabs({
             onToggleTracking={onToggleTracking}
             onSetMirror={onSetMirror}
             onSetHandTracking={onSetHandTracking}
+            cameraDevices={cameraDevices}
+            selectedCamera={selectedCamera}
+            onSetSelectedCamera={onSetSelectedCamera}
             onSetShowColliderHelper={onSetShowColliderHelper}
             showBoneHelper={showBoneHelper}
             onSetShowBoneHelper={onSetShowBoneHelper}
