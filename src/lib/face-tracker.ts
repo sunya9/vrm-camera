@@ -34,9 +34,7 @@ interface TrackerOptions {
   enableHands?: boolean;
 }
 
-export async function createFaceTracker(
-  options: TrackerOptions = {},
-): Promise<FaceTracker> {
+export async function createFaceTracker(options: TrackerOptions = {}): Promise<FaceTracker> {
   const base = import.meta.env.BASE_URL;
   const vision = await FilesetResolver.forVisionTasks(`${base}mediapipe/wasm`);
 
@@ -73,9 +71,11 @@ export async function createFaceTracker(
       })
     : null;
 
-  const [faceLandmarker, poseLandmarker, gestureRecognizer] = await Promise.all(
-    [faceLandmarkerPromise, poseLandmarkerPromise, gestureRecognizerPromise],
-  );
+  const [faceLandmarker, poseLandmarker, gestureRecognizer] = await Promise.all([
+    faceLandmarkerPromise,
+    poseLandmarkerPromise,
+    gestureRecognizerPromise,
+  ]);
 
   let lastTimestamp = -1;
 

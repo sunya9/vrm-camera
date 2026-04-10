@@ -9,16 +9,6 @@ interface Vec3 {
   z: number;
 }
 
-export interface FingerCurlResult {
-  /** Curl angle in radians (0 = straight, positive = curled) */
-  curl: number;
-}
-
-export interface FingerSpreadResult {
-  /** Spread angle in radians (abduction from middle finger reference) */
-  spread: number;
-}
-
 /**
  * Compute the curl angle for a finger joint using 3D vectors.
  *
@@ -88,14 +78,6 @@ export function computeSpread(
 
   // Determine sign from cross product Z component (palm-relative)
   return crossZ >= 0 ? angle : -angle;
-}
-
-/**
- * Compute thumb curl. The thumb has a different rotation axis than other fingers.
- * Uses the angle between CMC→MCP and MCP→IP (or IP→TIP) segments.
- */
-export function computeThumbCurl(parent: Vec3, current: Vec3, child: Vec3): number {
-  return computeCurl(parent, current, child);
 }
 
 /** MediaPipe hand landmark indices */

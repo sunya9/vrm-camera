@@ -1,6 +1,6 @@
 import type { FaceTracker } from "./face-tracker";
 
-export interface ViewerState {
+interface ViewerState {
   activeTracker: FaceTracker | null;
   vrmUrl: string | null;
   vrmName: string | null;
@@ -22,7 +22,7 @@ export const initialViewerState: ViewerState = {
   fps: 0,
 };
 
-export type ViewerAction =
+type ViewerAction =
   | { type: "setActiveTracker"; tracker: FaceTracker | null }
   | { type: "setVrm"; url: string; name: string }
   | { type: "setVrmLoading"; loading: boolean }
