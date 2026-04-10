@@ -1,6 +1,7 @@
 import type { LightingSettings } from "@/lib/vrm-scene";
 import type { EffectSettings } from "@/lib/effects";
 import type { LogEntry } from "@/lib/log-store";
+import type { CameraDevice } from "@/lib/face-tracker";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -25,6 +26,10 @@ interface ControlTabsProps extends TabsPrimitive.Root.Props {
   bgImage: string | null;
   lighting: LightingSettings;
   showLightHelper: boolean;
+  showColliderHelper: boolean;
+  showBoneHelper: boolean;
+  headColliderScale: number;
+  hairStiffnessScale: number;
   effects: EffectSettings;
   activeExpression: string | null;
   logs: LogEntry[];
@@ -34,6 +39,13 @@ interface ControlTabsProps extends TabsPrimitive.Root.Props {
   onToggleTracking: () => void;
   onSetMirror: (v: boolean) => void;
   onSetHandTracking: (v: boolean) => void;
+  cameraDevices: CameraDevice[];
+  selectedCamera: string | null;
+  onSetSelectedCamera: (deviceId: string | null) => void;
+  onSetShowColliderHelper: (v: boolean) => void;
+  onSetShowBoneHelper: (v: boolean) => void;
+  onSetHeadColliderScale: (v: number) => void;
+  onSetHairStiffnessScale: (v: number) => void;
   onSetBackground: (change: BgChange) => void;
   onSetLighting: (settings: LightingSettings) => void;
   onSetShowLightHelper: (v: boolean) => void;
@@ -45,6 +57,7 @@ interface ControlTabsProps extends TabsPrimitive.Root.Props {
   onOpenControlPanel: () => void;
   onTabChange: (tab: string) => void;
   className?: string;
+  showControls: boolean;
 }
 
 export function ControlTabs({
@@ -64,6 +77,17 @@ export function ControlTabs({
   onToggleTracking,
   onSetMirror,
   onSetHandTracking,
+  cameraDevices,
+  selectedCamera,
+  onSetSelectedCamera,
+  showColliderHelper,
+  headColliderScale,
+  onSetShowColliderHelper,
+  showBoneHelper,
+  onSetShowBoneHelper,
+  onSetHeadColliderScale,
+  hairStiffnessScale,
+  onSetHairStiffnessScale,
   bgColor,
   bgImage,
   onSetBackground,
@@ -76,6 +100,7 @@ export function ControlTabs({
   activeExpression,
   onTriggerExpression,
   logs,
+  showControls,
   ...props
 }: ControlTabsProps) {
   return (
@@ -140,10 +165,21 @@ export function ControlTabs({
             tracking={tracking}
             handTracking={handTracking}
             mirror={mirror}
+            showColliderHelper={showColliderHelper}
+            headColliderScale={headColliderScale}
             onVRMUpload={onVRMUpload}
             onToggleTracking={onToggleTracking}
             onSetMirror={onSetMirror}
             onSetHandTracking={onSetHandTracking}
+            cameraDevices={cameraDevices}
+            selectedCamera={selectedCamera}
+            onSetSelectedCamera={onSetSelectedCamera}
+            onSetShowColliderHelper={onSetShowColliderHelper}
+            showBoneHelper={showBoneHelper}
+            onSetShowBoneHelper={onSetShowBoneHelper}
+            onSetHeadColliderScale={onSetHeadColliderScale}
+            hairStiffnessScale={hairStiffnessScale}
+            onSetHairStiffnessScale={onSetHairStiffnessScale}
           />
         </TabsContent>
 
@@ -172,7 +208,7 @@ export function ControlTabs({
         </TabsContent>
 
         <TabsContent value="log">
-          <LogTab logs={logs} />
+          <LogTab logs={logs} showControls={showControls} />
         </TabsContent>
 
         <TabsContent value="about">

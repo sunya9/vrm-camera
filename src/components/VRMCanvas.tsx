@@ -3,7 +3,8 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, ContactShadows } from "@react-three/drei";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
-import { VRMModel } from "./VRMModel";
+import { VRMModel, type GestureEvent } from "./VRMModel";
+import type { TrackingResult } from "@/lib/face-tracker";
 import { LightHelper } from "./LightHelper";
 import type { VRM } from "@pixiv/three-vrm";
 import type { FaceTracker } from "@/lib/face-tracker";
@@ -28,6 +29,12 @@ interface VRMCanvasProps {
   onVRMLoaded?: (vrm: VRM) => void;
   onVRMLoadingChange?: (loading: boolean) => void;
   onResetCamera?: React.MutableRefObject<(() => void) | null>;
+  onGestureChange?: (gestures: GestureEvent[]) => void;
+  showColliderHelper?: boolean;
+  headColliderScale?: number;
+  hairStiffnessScale?: number;
+  onTrackingResult?: (result: TrackingResult) => void;
+  showBoneHelper?: boolean;
 }
 
 const textureLoader = new THREE.TextureLoader();
@@ -60,6 +67,12 @@ export function VRMCanvas({
   onVRMLoaded,
   onVRMLoadingChange,
   onResetCamera,
+  onGestureChange,
+  showColliderHelper,
+  headColliderScale,
+  hairStiffnessScale,
+  onTrackingResult,
+  showBoneHelper,
 }: VRMCanvasProps) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const initializedRef = useRef(false);
@@ -118,7 +131,7 @@ export function VRMCanvas({
   }, [lighting.dirAngleH, lighting.dirAngleV, lighting.dirDistance]);
 
   return (
-    <div className="h-full w-full" style={{ transform: mirror ? "scaleX(-1)" : undefined }}>
+    <div className="h-full w-full" style={{ transform: mirror ? undefined : "scaleX(-1)" }}>
       <Canvas
         camera={{ position: [0, 1.4, 1.5], fov: 30, near: 0.1, far: 20 }}
         gl={{ alpha: true, antialias: true }}
@@ -153,6 +166,8 @@ export function VRMCanvas({
 
         {showHelper && <LightHelper position={lightPosition} />}
 
+        {showBoneHelper && <axesHelper args={[0.3]} position={[0, 1.2, 0]} />}
+
         {effects.contactShadows && (
           <ContactShadows position={[0, 0, 0]} opacity={0.5} scale={3} blur={2} far={2} />
         )}
@@ -165,6 +180,12 @@ export function VRMCanvas({
             expressionOverrides={expressionOverrides}
             onLoaded={onVRMLoaded}
             onLoadingChange={onVRMLoadingChange}
+            onGestureChange={onGestureChange}
+            showColliderHelper={showColliderHelper}
+            headColliderScale={headColliderScale}
+            hairStiffnessScale={hairStiffnessScale}
+            onTrackingResult={onTrackingResult}
+            showBoneHelper={showBoneHelper}
           />
         )}
 

@@ -1,24 +1,31 @@
 import {
   FaceLandmarker,
   PoseLandmarker,
-  HandLandmarker,
+  GestureRecognizer,
   FilesetResolver,
   type FaceLandmarkerResult,
   type PoseLandmarkerResult,
-  type HandLandmarkerResult,
+  type GestureRecognizerResult,
 } from "@mediapipe/tasks-vision";
 
 export interface TrackingResult {
   face: FaceLandmarkerResult | null;
   pose: PoseLandmarkerResult | null;
-  hands: HandLandmarkerResult | null;
+  hands: HandsResult | null;
   timestamp: number;
+}
+
+export interface HandsResult {
+  landmarks: GestureRecognizerResult["landmarks"];
+  worldLandmarks: GestureRecognizerResult["worldLandmarks"];
+  handedness: GestureRecognizerResult["handedness"];
+  gestures: GestureRecognizerResult["gestures"];
 }
 
 export interface FaceTracker {
   faceLandmarker: FaceLandmarker;
   poseLandmarker: PoseLandmarker;
-  handLandmarker: HandLandmarker | null;
+  gestureRecognizer: GestureRecognizer | null;
   detect: (video: HTMLVideoElement) => TrackingResult;
   dispose: () => void;
 }
@@ -53,10 +60,10 @@ export async function createFaceTracker(options: TrackerOptions = {}): Promise<F
     numPoses: 1,
   });
 
-  const handLandmarkerPromise = options.enableHands
-    ? HandLandmarker.createFromOptions(vision, {
+  const gestureRecognizerPromise = options.enableHands
+    ? GestureRecognizer.createFromOptions(vision, {
         baseOptions: {
-          modelAssetPath: `${base}mediapipe/models/hand_landmarker.task`,
+          modelAssetPath: `${base}mediapipe/models/gesture_recognizer.task`,
           delegate,
         },
         runningMode: "VIDEO",
@@ -64,10 +71,10 @@ export async function createFaceTracker(options: TrackerOptions = {}): Promise<F
       })
     : null;
 
-  const [faceLandmarker, poseLandmarker, handLandmarker] = await Promise.all([
+  const [faceLandmarker, poseLandmarker, gestureRecognizer] = await Promise.all([
     faceLandmarkerPromise,
     poseLandmarkerPromise,
-    handLandmarkerPromise,
+    gestureRecognizerPromise,
   ]);
 
   let lastTimestamp = -1;
@@ -75,7 +82,7 @@ export async function createFaceTracker(options: TrackerOptions = {}): Promise<F
   return {
     faceLandmarker,
     poseLandmarker,
-    handLandmarker: handLandmarker ?? null,
+    gestureRecognizer: gestureRecognizer ?? null,
     detect(video: HTMLVideoElement): TrackingResult {
       const now = performance.now();
       if (now <= lastTimestamp) {
@@ -85,7 +92,7 @@ export async function createFaceTracker(options: TrackerOptions = {}): Promise<F
 
       let face: FaceLandmarkerResult | null = null;
       let pose: PoseLandmarkerResult | null = null;
-      let hands: HandLandmarkerResult | null = null;
+      let hands: HandsResult | null = null;
 
       try {
         face = faceLandmarker.detectForVideo(video, now);
@@ -99,9 +106,15 @@ export async function createFaceTracker(options: TrackerOptions = {}): Promise<F
         // skip frame
       }
 
-      if (handLandmarker) {
+      if (gestureRecognizer) {
         try {
-          hands = handLandmarker.detectForVideo(video, now);
+          const result = gestureRecognizer.recognizeForVideo(video, now);
+          hands = {
+            landmarks: result.landmarks,
+            worldLandmarks: result.worldLandmarks,
+            handedness: result.handedness,
+            gestures: result.gestures,
+          };
         } catch {
           // skip frame
         }
@@ -112,17 +125,49 @@ export async function createFaceTracker(options: TrackerOptions = {}): Promise<F
     dispose() {
       faceLandmarker.close();
       poseLandmarker.close();
-      handLandmarker?.close();
+      gestureRecognizer?.close();
     },
   };
 }
 
-export async function setupWebcam(videoElement: HTMLVideoElement): Promise<MediaStream> {
+export async function setupWebcam(
+  videoElement: HTMLVideoElement,
+  deviceId?: string,
+): Promise<MediaStream> {
+  const video: MediaTrackConstraints = deviceId
+    ? { width: 640, height: 480, deviceId: { exact: deviceId } }
+    : { width: 640, height: 480, facingMode: "user" };
   const stream = await navigator.mediaDevices.getUserMedia({
-    video: { width: 640, height: 480, facingMode: "user" },
+    video,
     audio: false,
   });
   videoElement.srcObject = stream;
   await videoElement.play();
   return stream;
+}
+
+export interface CameraDevice {
+  deviceId: string;
+  label: string;
+}
+
+export async function listCameraDevices(): Promise<CameraDevice[]> {
+  // Request permission first (needed to get labels)
+  try {
+    const tempStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+    });
+    for (const track of tempStream.getTracks()) track.stop();
+  } catch {
+    return [];
+  }
+
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  console.log({ devices });
+  return devices
+    .filter((d) => d.kind === "videoinput")
+    .map((d, i) => ({
+      deviceId: d.deviceId,
+      label: d.label || `カメラ ${i + 1}`,
+    }));
 }
