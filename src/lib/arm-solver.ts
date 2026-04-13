@@ -10,12 +10,12 @@ interface Vec3 {
   visibility?: number;
 }
 
-export interface ShoulderSolveResult {
+interface ShoulderSolveResult {
   /** Shoulder Z rotation (shrug up/down, radians) */
   shoulderZ: number;
 }
 
-export interface ArmSolveResult {
+interface ArmSolveResult {
   /** Upper arm Z rotation (raise/lower, radians) */
   upperArmZ: number;
   /** Upper arm X rotation (forward/backward, radians) */
@@ -26,7 +26,7 @@ export interface ArmSolveResult {
   lowerArmY: number;
 }
 
-export interface SpineSolveResult {
+interface SpineSolveResult {
   /** Spine roll from shoulder tilt (radians) */
   roll: number;
   /** Spine yaw from body turn (radians) */
