@@ -55,7 +55,7 @@
     "lefthook": "^2.1.4",
     "oxfmt": "^0.43.0",
     "typescript": "~6.0.2",
-    "typescript-eslint": "^8.58.1",
+    "typescript-eslint": "^8.58.2",
     "vite": "^8.0.5",
     "vite-plugin-static-copy": "^4.0.0",
     "vitest": "^4.1.1"
