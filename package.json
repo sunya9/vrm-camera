@@ -58,7 +58,7 @@
     "typescript-eslint": "^8.58.1",
     "vite": "^8.0.5",
     "vite-plugin-static-copy": "^4.0.0",
-    "vitest": "^4.1.1"
+    "vitest": "^4.1.4"
   },
   "packageManager": "pnpm@10.32.1"
 }
