@@ -1,5 +1,11 @@
-import { useEffect, useRef, useCallback, useReducer, useEffectEvent } from "react";
-import { createFaceTracker, setupWebcam, type FaceTracker } from "@/lib/face-tracker";
+import { useEffect, useRef, useCallback, useReducer, useState, useEffectEvent } from "react";
+import {
+  createFaceTracker,
+  setupWebcam,
+  listCameraDevices,
+  type FaceTracker,
+  type CameraDevice,
+} from "@/lib/face-tracker";
 import { resetAnimatorState } from "@/lib/vrm-animator";
 import { cacheVRM, loadCachedVRM } from "@/lib/vrm-cache";
 import { usePersistedState } from "@/lib/use-persisted-state";
@@ -66,6 +72,11 @@ export function VRMViewer() {
   const [headColliderScale, setHeadColliderScale] = usePersistedState("headColliderScale", 1.5);
   const [hairStiffnessScale, setHairStiffnessScale] = usePersistedState("hairStiffnessScale", 1.0);
   const [showDebug, setShowDebug] = usePersistedState("showDebug", false);
+  const [selectedCamera, setSelectedCamera] = usePersistedState<string | null>(
+    "selectedCamera",
+    null,
+  );
+  const [cameraDevices, setCameraDevices] = useState<CameraDevice[]>([]);
 
   // Derived
   const isOnLightTab = (activeTab === "lighting" && showControls) || remoteLightTab;
@@ -73,6 +84,19 @@ export function VRMViewer() {
 
   const { logs, addLog } = useLogStore();
   const log = useEffectEvent(addLog);
+
+  // Enumerate camera devices (and re-enumerate when devices change)
+  useEffect(() => {
+    listCameraDevices().then(setCameraDevices);
+
+    const onDeviceChange = () => {
+      listCameraDevices().then(setCameraDevices);
+    };
+    navigator.mediaDevices.addEventListener("devicechange", onDeviceChange);
+    return () => {
+      navigator.mediaDevices.removeEventListener("devicechange", onDeviceChange);
+    };
+  }, []);
 
   // FPS counter
   useEffect(() => {
@@ -162,11 +186,11 @@ export function VRMViewer() {
     let cancelled = false;
 
     async function startCamera() {
-      const video = videoRef.current!;
+      const video = videoRef.current;
       if (!video) return;
       log("カメラ起動中...");
       try {
-        const stream = await setupWebcam(video);
+        const stream = await setupWebcam(video, selectedCamera ?? undefined);
         if (cancelled) {
           for (const track of stream.getTracks()) track.stop();
           return;
@@ -190,7 +214,7 @@ export function VRMViewer() {
       }
       log("カメラ停止");
     };
-  }, [tracking, setTracking]);
+  }, [tracking, setTracking, selectedCamera]);
 
   // Expression trigger
   const triggerExpression = useCallback(
@@ -566,6 +590,9 @@ export function VRMViewer() {
         onToggleTracking={() => setTracking((v: boolean) => !v)}
         onSetMirror={setMirror}
         onSetHandTracking={setHandTracking}
+        cameraDevices={cameraDevices}
+        selectedCamera={selectedCamera}
+        onSetSelectedCamera={setSelectedCamera}
         onSetBackground={(change) => {
           if (change.type === "color") {
             setBgColor(change.color);
